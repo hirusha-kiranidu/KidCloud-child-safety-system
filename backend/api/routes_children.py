@@ -21,3 +21,13 @@ def register_child(child_data: ChildCreate, uid: str = Depends(get_current_user_
     """
     child = firestore_crud.add_child(uid, child_data)
     return child
+
+@router.put("/{child_id}/location", response_model=ChildResponse)
+def update_location(child_id: str, location_data: ChildUpdateLocation):
+    """
+    Update a child's live location.
+    """
+    updated_child = firestore_crud.update_child_location(child_id, location_data)
+    if not updated_child:
+        raise HTTPException(status_code=404, detail="Child not found")
+    return updated_child
