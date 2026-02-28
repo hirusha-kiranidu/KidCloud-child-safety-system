@@ -24,3 +24,16 @@ class ChildBase(BaseModel):
     
 class ChildCreate(ChildBase):
     pass
+
+class ChildUpdateLocation(BaseModel):
+    status: str = Field(..., description="E.g., Walking, Idle")
+    speed_kmh: float = 0.0
+    location: Location
+
+class ChildResponse(ChildBase):
+    id: str
+    guardian_id: str
+    status: str
+    speed_kmh: float
+    location: Optional[Location] = None
+    last_updated: Optional[datetime] = None
