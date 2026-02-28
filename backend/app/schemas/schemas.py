@@ -14,3 +14,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     uid: str
     created_at: datetime
+
+class Location(BaseModel):
+    latitude: float
+    longitude: float
