@@ -7,3 +7,10 @@ class UserBase(BaseModel):
     last_name: str
     email: EmailStr
     phone_number: Optional[str] = None
+
+class UserCreate(UserBase):
+    pass
+
+class UserResponse(UserBase):
+    uid: str
+    created_at: datetime
