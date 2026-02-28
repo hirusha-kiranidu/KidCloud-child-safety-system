@@ -18,3 +18,9 @@ class UserResponse(UserBase):
 class Location(BaseModel):
     latitude: float
     longitude: float
+
+class ChildBase(BaseModel):
+    name: str
+    
+class ChildCreate(ChildBase):
+    pass
