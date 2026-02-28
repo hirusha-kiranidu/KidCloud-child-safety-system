@@ -31,3 +31,13 @@ def update_location(child_id: str, location_data: ChildUpdateLocation):
     if not updated_child:
         raise HTTPException(status_code=404, detail="Child not found")
     return updated_child
+
+@router.get("/{child_id}", response_model=ChildResponse)
+def get_child_details(child_id: str, uid: str = Depends(get_current_user_id)):
+    """
+    Get details of a specific child.
+    """
+    child = firestore_crud.get_child(child_id, uid)
+    if not child:
+        raise HTTPException(status_code=404, detail="Child not found or not authorized")
+    return child
