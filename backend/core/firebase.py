@@ -22,3 +22,6 @@ def initialize_firebase():
             print(f"Failed to initialize Firebase: {e}")
 
 initialize_firebase()
+
+def get_db():
+    return firestore.client()
