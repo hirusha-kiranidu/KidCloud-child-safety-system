@@ -67,3 +67,15 @@ def update_child_location(child_id: str, location_data: ChildUpdateLocation):
     updated_child = child_ref.get().to_dict()
     updated_child['id'] = child.id
     return updated_child
+
+def get_child(child_id: str, guardian_id: str):
+    db = get_db()
+    child_ref = db.collection('children').document(child_id)
+    child = child_ref.get()
+    if not child.exists:
+        return None
+    data = child.to_dict()
+    if data.get('guardian_id') != guardian_id:
+        return None
+    data['id'] = child.id
+    return data
