@@ -20,3 +20,5 @@ def initialize_firebase():
                 )
         except Exception as e:
             print(f"Failed to initialize Firebase: {e}")
+
+initialize_firebase()
