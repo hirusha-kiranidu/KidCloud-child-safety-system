@@ -35,3 +35,13 @@ def verify_token(
             detail="Error authenticating user",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+def get_current_user_id(decoded_token: dict = Depends(verify_token)) -> str:
+    
+    uid = decoded_token.get("uid")
+    if not uid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token does not contain user ID",
+        )
+    return uid
