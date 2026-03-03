@@ -6,3 +6,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
+
+def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> dict:
+    
+    token = credentials.credentials
+    try:
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token
