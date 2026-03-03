@@ -38,3 +38,32 @@ def get_children_for_guardian(guardian_id: str):
         data['id'] = child.id
         result.append(data)
     return result
+
+    def add_child(guardian_id: str, child_data: ChildCreate):
+    db = get_db()
+    data = child_data.model_dump()
+    data['guardian_id'] = guardian_id
+    data['status'] = 'Idle'
+    data['speed_kmh'] = 0.0
+    data['location'] = {'latitude': 0.0, 'longitude': 0.0}
+    data['last_updated'] = datetime.now(pytz.utc)
+    
+    _, doc_ref = db.collection('children').add(data)
+    data['id'] = doc_ref.id
+    return data
+
+
+def update_child_location(child_id: str, location_data: ChildUpdateLocation):
+    db = get_db()
+    child_ref = db.collection('children').document(child_id)
+    child = child_ref.get()
+    if not child.exists:
+        return None
+    
+    update_data = location_data.model_dump()
+    update_data['last_updated'] = datetime.now(pytz.utc)
+    child_ref.update(update_data)
+    
+    updated_child = child_ref.get().to_dict()
+    updated_child['id'] = child.id
+    return updated_child
