@@ -11,3 +11,12 @@ def initialize_firebase():
                 cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
                 firebase_admin.initialize_app(cred)
                 print("Firebase Admin SDK initialized successfully.")
+
+            else:
+                firebase_admin.initialize_app()
+                print(
+                    f"Warning: {settings.FIREBASE_CREDENTIALS_PATH} not found. "
+                    "using default credentials."
+                )
+        except Exception as e:
+            print(f"Failed to initialize Firebase: {e}")
