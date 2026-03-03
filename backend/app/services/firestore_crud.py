@@ -13,3 +13,12 @@ def get_user(uid: str):
         data['uid'] = user.id
         return data
     return None
+
+def create_user(uid: str, user_data: UserCreate):
+    db = get_db()
+    user_ref = db.collection('users').document(uid)
+    data = user_data.model_dump()
+    data['created_at'] = datetime.now(pytz.utc)
+    user_ref.set(data)
+    data['uid'] = uid
+    return data
