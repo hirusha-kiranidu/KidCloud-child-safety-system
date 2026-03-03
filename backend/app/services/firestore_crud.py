@@ -39,7 +39,7 @@ def get_children_for_guardian(guardian_id: str):
         result.append(data)
     return result
 
-    def add_child(guardian_id: str, child_data: ChildCreate):
+def add_child(guardian_id: str, child_data: ChildCreate):
     db = get_db()
     data = child_data.model_dump()
     data['guardian_id'] = guardian_id
