@@ -8,6 +8,8 @@ class Frame1 extends StatelessWidget {
     return Scaffold(
       body: Container(
         width: double.infinity,
+
+        // Background Gradient
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -19,33 +21,35 @@ class Frame1 extends StatelessWidget {
             end: Alignment.bottomCenter,
           ),
         ),
+
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
 
             const SizedBox(height: 120),
 
-            // App Name
+            // KIDCLOUD Title
             const Text(
               "KIDCLOUD",
               style: TextStyle(
                 fontSize: 38,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 6,
-                color: Color(0xFFFF8C2B), // Orange
+                color: Color(0xFFFF8C2B),
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
-            // Tagline
+            // Tagline Text
             const Text(
               "CARRY THEIR SAFETY, EVERYWHERE",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
                 letterSpacing: 4,
-                color: Colors.blue, // 🔵 Changed to blue
-                fontWeight: FontWeight.w500,
+                color: Color.fromARGB(255, 71, 124, 181), // Blue color
+                fontWeight: FontWeight.bold, // Bold text
               ),
             ),
           ],
