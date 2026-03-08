@@ -19,7 +19,6 @@ class Frame1 extends StatelessWidget {
             end: Alignment.bottomCenter,
           ),
         ),
-
         child: Column(
           children: [
 
@@ -32,7 +31,7 @@ class Frame1 extends StatelessWidget {
                 fontSize: 38,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 6,
-                color: Color(0xFFFF8C2B),
+                color: Color(0xFFFF8C2B), // Orange
               ),
             ),
 
@@ -45,7 +44,7 @@ class Frame1 extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 letterSpacing: 4,
-                color: Color(0xFF3A5A7A),
+                color: Colors.blue, // 🔵 Changed to blue
                 fontWeight: FontWeight.w500,
               ),
             ),
