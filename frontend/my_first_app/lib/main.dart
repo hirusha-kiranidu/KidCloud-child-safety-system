@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screens/signup_screen.dart';
 
 void main() {
   runApp(const KidCloudApp());
@@ -10,7 +11,8 @@ class KidCloudApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: Scaffold(body: Center(child: Text("KidCloud"))),
+      debugShowCheckedModeBanner: false,
+      home: SignupScreen(),
     );
   }
 }
