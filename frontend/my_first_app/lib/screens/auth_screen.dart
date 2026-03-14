@@ -15,6 +15,10 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
+<<<<<<< HEAD
+=======
+  final _phone = TextEditingController();
+>>>>>>> 2e902e3 (implement password and confirm password inputs)
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +50,19 @@ class _SignupScreenState extends State<SignupScreen> {
             controller: _email,
             T: T,
           ),
+<<<<<<< HEAD
+=======
+
+          KCInput(
+            label: "Phone",
+            placeholder: "+94 7X XXX XXXX",
+            icon: "📱",
+            controller: _phone,
+            T: T,
+          ),
+
+          PrimaryBtn(label: "Continue →", onTap: () {}, T: T),
+>>>>>>> 2e902e3 (implement password and confirm password inputs)
         ],
       ),
     );
