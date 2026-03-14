@@ -32,7 +32,25 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final T = AppTheme();
+    final T = AppTheme(
+      bg: Colors.white,
+      surface: Colors.grey[50]!,
+      card: Colors.white,
+      card2: Colors.grey[100]!,
+      border: Colors.grey[300]!,
+      text: Colors.black,
+      sub: Colors.grey[700]!,
+      muted: Colors.grey[500]!,
+      cyan: Colors.cyan,
+      cyanD: Colors.cyan[700]!,
+      blue: Colors.blue,
+      indigo: Colors.indigo,
+      green: Colors.green,
+      red: Colors.red,
+      orange: Colors.orange,
+      yellow: Colors.yellow,
+      pink: Colors.pink,
+    );
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -46,9 +64,14 @@ class _MyAppState extends State<MyApp> {
         return SignupScreen(go: go, T: T);
       case "login":
         return LoginScreen(go: go, T: T);
-      default:
-        // You can replace this with a fallback widget or throw if appropriate
-        return const SizedBox.shrink();
+      // ...other cases if needed...
     }
+    // Default fallback if no case matches
+    return Center(
+      child: Text(
+        'Unknown screen: '
+        '"[screen]"',
+      ),
+    );
   }
 }
