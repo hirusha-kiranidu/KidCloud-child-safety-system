@@ -19,6 +19,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final _pass = TextEditingController();
   final _confirm = TextEditingController();
 
+  bool _agreed = false;
+
   Color get _strengthColor {
     final l = _pass.text.length;
     if (l >= 8) return widget.T.green;
@@ -85,10 +87,7 @@ class _SignupScreenState extends State<SignupScreen> {
             valueListenable: _pass,
             builder: (_, __, ___) => Text(
               "Password Strength: $_strengthLabel",
-              style: TextStyle(
-                color: _strengthColor,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: _strengthColor),
             ),
           ),
 
@@ -99,6 +98,20 @@ class _SignupScreenState extends State<SignupScreen> {
             controller: _confirm,
             obscure: true,
             T: T,
+          ),
+
+          Row(
+            children: [
+              Checkbox(
+                value: _agreed,
+                onChanged: (v) {
+                  setState(() {
+                    _agreed = v!;
+                  });
+                },
+              ),
+              const Text("I agree to Terms and Privacy Policy"),
+            ],
           ),
 
           const SizedBox(height: 20),
