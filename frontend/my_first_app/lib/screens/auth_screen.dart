@@ -15,10 +15,23 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
-<<<<<<< HEAD
-=======
   final _phone = TextEditingController();
->>>>>>> 2e902e3 (implement password and confirm password inputs)
+  final _pass = TextEditingController();
+  final _confirm = TextEditingController();
+
+  Color get _strengthColor {
+    final l = _pass.text.length;
+    if (l >= 8) return widget.T.green;
+    if (l >= 4) return widget.T.yellow;
+    return widget.T.red;
+  }
+
+  String get _strengthLabel {
+    final l = _pass.text.length;
+    if (l >= 8) return "Strong";
+    if (l >= 4) return "Medium";
+    return "Weak";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +63,6 @@ class _SignupScreenState extends State<SignupScreen> {
             controller: _email,
             T: T,
           ),
-<<<<<<< HEAD
-=======
 
           KCInput(
             label: "Phone",
@@ -61,8 +72,38 @@ class _SignupScreenState extends State<SignupScreen> {
             T: T,
           ),
 
-          PrimaryBtn(label: "Continue →", onTap: () {}, T: T),
->>>>>>> 2e902e3 (implement password and confirm password inputs)
+          KCInput(
+            label: "Password",
+            placeholder: "Enter password",
+            icon: "🔒",
+            controller: _pass,
+            obscure: true,
+            T: T,
+          ),
+
+          ValueListenableBuilder(
+            valueListenable: _pass,
+            builder: (_, __, ___) => Text(
+              "Password Strength: $_strengthLabel",
+              style: TextStyle(
+                color: _strengthColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          KCInput(
+            label: "Confirm Password",
+            placeholder: "Re-enter password",
+            icon: "🔐",
+            controller: _confirm,
+            obscure: true,
+            T: T,
+          ),
+
+          const SizedBox(height: 20),
+
+          PrimaryBtn(label: "Create Account", onTap: () {}, T: T),
         ],
       ),
     );
