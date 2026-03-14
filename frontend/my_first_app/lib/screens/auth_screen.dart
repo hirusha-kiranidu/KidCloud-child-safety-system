@@ -13,6 +13,9 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
@@ -25,6 +28,22 @@ class _SignupScreenState extends State<SignupScreen> {
             title: "Create Account",
             sub: "Sign up to continue",
             onBack: () => widget.go("welcome"),
+            T: T,
+          ),
+
+          KCInput(
+            label: "Full Name",
+            placeholder: "Alex Johnson",
+            icon: "👤",
+            controller: _name,
+            T: T,
+          ),
+
+          KCInput(
+            label: "Email",
+            placeholder: "you@email.com",
+            icon: "✉️",
+            controller: _email,
             T: T,
           ),
         ],
