@@ -117,6 +117,13 @@ class _SignupScreenState extends State<SignupScreen> {
           const SizedBox(height: 20),
 
           PrimaryBtn(label: "Create Account", onTap: () {}, T: T),
+
+          const SizedBox(height: 20),
+
+          GestureDetector(
+            onTap: () => widget.go("login"),
+            child: const Text("Already have an account? Sign In"),
+          ),
         ],
       ),
     );
@@ -131,6 +138,44 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          KCTopBar(
+            title: "Welcome Back",
+            sub: "Sign in to continue",
+            onBack: () => go("welcome"),
+            T: T,
+          ),
+
+          KCInput(
+            label: "Email",
+            placeholder: "you@email.com",
+            icon: "✉️",
+            T: T,
+          ),
+
+          KCInput(
+            label: "Password",
+            placeholder: "Enter password",
+            icon: "🔒",
+            obscure: true,
+            T: T,
+          ),
+
+          const SizedBox(height: 20),
+
+          PrimaryBtn(label: "Sign In", onTap: () => go("dashboard"), T: T),
+
+          const SizedBox(height: 20),
+
+          GestureDetector(
+            onTap: () => go("signup"),
+            child: const Text("Create new account"),
+          ),
+        ],
+      ),
+    );
   }
 }
