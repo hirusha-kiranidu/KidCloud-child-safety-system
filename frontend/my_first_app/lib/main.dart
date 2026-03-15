@@ -3,12 +3,6 @@ import 'theme/app_theme.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/onboard_screen.dart';
-import 'screens/auth_screen.dart'; // AUTH SCREEN IMPORT
-import 'screens/dashboard_screen.dart';
-import 'screens/tracking_screen.dart';
-import 'screens/notifs_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/safezone_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,6 +16,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+
   String screen = "splash";
 
   void go(String nextScreen) {
@@ -32,6 +27,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+
     final T = AppTheme(
       bg: Colors.white,
       surface: Colors.grey[50]!,
@@ -54,24 +50,36 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: SafeArea(child: buildScreen(T))),
+      home: Scaffold(
+        body: SafeArea(
+          child: buildScreen(T),
+        ),
+      ),
     );
   }
 
   Widget buildScreen(AppTheme T) {
+
     switch (screen) {
-      case "signup":
-        return SignupScreen(go: go, T: T);
-      case "login":
-        return LoginScreen(go: go, T: T);
-      // ...other cases if needed...
+
+      case "splash":
+        return SplashScreen(go: go, T: T);
+
+      case "onboard0":
+        return OnboardScreen(idx: 0, go: go, T: T);
+
+      case "onboard1":
+        return OnboardScreen(idx: 1, go: go, T: T);
+
+      case "onboard2":
+        return OnboardScreen(idx: 2, go: go, T: T);
+
+      case "welcome":
+        return WelcomeScreen(go: go, T: T);
+
+      default:
+        return SplashScreen(go: go, T: T);
     }
-    // Default fallback if no case matches
-    return Center(
-      child: Text(
-        'Unknown screen: '
-        '"[screen]"',
-      ),
-    );
   }
 }
+

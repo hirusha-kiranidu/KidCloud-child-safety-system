@@ -1,46 +1,49 @@
-<<<<<<< HEAD
-=======
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
->>>>>>> 1f41fc70e6d35b8e2acbe050d5b7e95a0225225a
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:my_first_app/main.dart';
 
 void main() {
-<<<<<<< HEAD
-  testWidgets('KidCloud UI loads test', (WidgetTester tester) async {
 
-    // Build the KidCloud app
-    await tester.pumpWidget(const KidCloudApp());
+  testWidgets('App loads and shows splash screen', (WidgetTester tester) async {
 
-    // Check if title text appears
-    expect(find.text('KIDCLOUD'), findsOneWidget);
-
-  });
-}
-=======
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+    // Build the app
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Check if SplashScreen UI appears
+    expect(find.text('Kid'), findsOneWidget);
+    expect(find.text('Cloud'), findsOneWidget);
   });
+
+
+  testWidgets('Splash screen navigates to onboarding', (WidgetTester tester) async {
+
+    await tester.pumpWidget(const MyApp());
+
+    // wait for splash delay animation
+    await tester.pump(const Duration(seconds: 3));
+
+    // Onboarding screen should appear
+    expect(find.text('Real-Time GPS Tracking'), findsOneWidget);
+  });
+
+
+  testWidgets('Next button moves onboarding screen', (WidgetTester tester) async {
+
+    await tester.pumpWidget(const MyApp());
+
+    // Wait for splash
+    await tester.pump(const Duration(seconds: 3));
+
+    // Tap next
+    await tester.tap(find.text('Next →'));
+    await tester.pumpAndSettle();
+
+    // Second onboarding screen should appear
+    expect(find.text('Safe Zone Alerts'), findsOneWidget);
+  });
+
 }
->>>>>>> 1f41fc70e6d35b8e2acbe050d5b7e95a0225225a
+
+
+
