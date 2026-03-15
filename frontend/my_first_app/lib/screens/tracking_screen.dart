@@ -22,7 +22,17 @@ class TrackingScreen extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      child: Column(children: []),
+      child: Column(
+        children: [
+          KCTopBar(
+            title: 'Live Tracking',
+            sub: 'Real-time GPS · Updated just now',
+            onBack: () => go('dashboard'),
+            T: T,
+            rightEl: Pill(text: '${c.avatar} ${c.name}', color: color),
+          ),
+        ],
+      ),
     );
   }
 }
