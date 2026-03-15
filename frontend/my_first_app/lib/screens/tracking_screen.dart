@@ -17,6 +17,9 @@ class TrackingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = child ?? kidsData[0];
+    final color = Color(c.colorHex);
+
     return Container();
   }
 }
