@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 
+// Signup Screen
 class SignupScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -104,11 +106,7 @@ class _SignupScreenState extends State<SignupScreen> {
             children: [
               Checkbox(
                 value: _agreed,
-                onChanged: (v) {
-                  setState(() {
-                    _agreed = v!;
-                  });
-                },
+                onChanged: (v) => setState(() => _agreed = v!),
               ),
               const Text("I agree to Terms and Privacy Policy"),
             ],
@@ -116,7 +114,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
           const SizedBox(height: 20),
 
-          PrimaryBtn(label: "Create Account", onTap: () {}, T: T),
+          PrimaryBtn(
+            label: "Create Account",
+            onTap: () => widget.go("otp"),
+            T: T,
+          ),
 
           const SizedBox(height: 20),
 
@@ -130,14 +132,24 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 }
 
-class LoginScreen extends StatelessWidget {
+// Login Screen
+class LoginScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
 
   const LoginScreen({super.key, required this.go, required this.T});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _obscurePass = true;
+
+  @override
   Widget build(BuildContext context) {
+    final T = widget.T;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -145,7 +157,7 @@ class LoginScreen extends StatelessWidget {
           KCTopBar(
             title: "Welcome Back",
             sub: "Sign in to continue",
-            onBack: () => go("welcome"),
+            onBack: () => widget.go("welcome"),
             T: T,
           ),
 
@@ -160,20 +172,82 @@ class LoginScreen extends StatelessWidget {
             label: "Password",
             placeholder: "Enter password",
             icon: "🔒",
-            obscure: true,
+            obscure: _obscurePass,
             T: T,
+          ),
+
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text("Forgot Password?", style: TextStyle(color: T.cyan)),
           ),
 
           const SizedBox(height: 20),
 
-          PrimaryBtn(label: "Sign In", onTap: () => go("dashboard"), T: T),
+          PrimaryBtn(label: "Sign In", onTap: () => widget.go("otp"), T: T),
+
+          const SizedBox(height: 20),
+
+          Row(
+            children: const [
+              Expanded(child: Divider()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Text("OR"),
+              ),
+              Expanded(child: Divider()),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          Row(
+            children: [
+              Expanded(
+                child: _SocialBtn(icon: "🔵", label: "Google", T: T),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SocialBtn(icon: "🍎", label: "Apple", T: T),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SocialBtn(icon: "📘", label: "Facebook", T: T),
+              ),
+            ],
+          ),
 
           const SizedBox(height: 20),
 
           GestureDetector(
-            onTap: () => go("signup"),
-            child: const Text("Create new account"),
+            onTap: () => widget.go("signup"),
+            child: const Text("Need an account? Sign up here"),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// Social Button
+class _SocialBtn extends StatelessWidget {
+  final String icon;
+  final String label;
+  final AppTheme T;
+
+  const _SocialBtn({required this.icon, required this.label, required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: T.border),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 22)),
+          Text(label),
         ],
       ),
     );
