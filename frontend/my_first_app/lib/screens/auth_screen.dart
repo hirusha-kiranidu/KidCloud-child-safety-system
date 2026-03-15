@@ -55,6 +55,7 @@ class _SignupScreenState extends State<SignupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Top bar ─────────────────────────────
             KCTopBar(
               title: 'Create Account',
               sub: 'Step $_step of 2',
@@ -131,6 +132,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 T: T,
                 obscure: !_showPass,
               ),
+              // Strength bar
               ValueListenableBuilder(
                 valueListenable: _pass,
                 builder: (_, __, ___) => Container(
@@ -190,6 +192,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
               ),
+              // Terms
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -244,13 +247,13 @@ class _SignupScreenState extends State<SignupScreen> {
                 ],
               ),
               const SizedBox(height: 20),
+              // ── Create Account → OTP ──────────────
               PrimaryBtn(
                 label: 'Create Account  🎉',
                 onTap: () => widget.go('otp'),
                 T: T,
               ),
             ],
-
             const SizedBox(height: 18),
             Center(
               child: GestureDetector(
@@ -302,6 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final font = GoogleFonts.nunito().fontFamily;
 
     return Container(
+      // ── KidCloud gradient background ───────────────
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -320,6 +324,8 @@ class _LoginScreenState extends State<LoginScreen> {
               T: T,
             ),
             const SizedBox(height: 10),
+
+            // ── Logo ──────────────────────────────────
             Container(
               width: 80,
               height: 80,
@@ -343,6 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 14),
+
             Text(
               'KidCloud',
               style: TextStyle(
@@ -365,6 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 28),
 
+            // ── Form card ─────────────────────────────
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -411,6 +419,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // ── Login → OTP ───────────────────────────
             PrimaryBtn(
               label: 'Sign In  →',
               onTap: () => widget.go('otp'),
@@ -418,6 +428,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 20),
 
+            // ── Divider ───────────────────────────────
             Row(
               children: [
                 Expanded(child: Divider(color: T.border)),
@@ -438,6 +449,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
 
+            // ── Social buttons ────────────────────────
             Row(
               children: [
                 Expanded(
@@ -469,6 +481,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             const SizedBox(height: 22),
+
             GestureDetector(
               onTap: () => widget.go('signup'),
               child: RichText(
