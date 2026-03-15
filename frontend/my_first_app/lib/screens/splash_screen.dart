@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_theme.dart'; // Keep this if you will use AppTheme later
 
 class SplashScreen extends StatefulWidget {
   final Function(String) go;
@@ -15,19 +14,11 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
-    final T = widget.T;
-    final nunitoFont = GoogleFonts.nunito().fontFamily;
-
     return Scaffold(
       body: Center(
         child: Text(
-          'KidCloud',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            fontFamily: nunitoFont,
-            color: T.cyan,
-          ),
+          'Splash Screen',
+          style: TextStyle(fontSize: 24),
         ),
       ),
     );
