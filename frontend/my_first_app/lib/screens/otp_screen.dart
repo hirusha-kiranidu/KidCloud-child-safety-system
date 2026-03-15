@@ -53,33 +53,34 @@ class _OtpScreenState extends State<OtpScreen> {
       if (!mounted) return;
       if (_secondsLeft == 0) {
         timer.cancel();
-        setState(() {
-          _canResend = true;
-        });
+        setState(() => _canResend = true);
       } else {
-        setState(() {
-          _secondsLeft--;
-        });
+        setState(() => _secondsLeft--);
       }
     });
   }
 
-  // ── Get timer display in mm:ss
+  // ── Timer display helper: mm:ss string
   String get _timerDisplay {
     final minutes = _secondsLeft ~/ 60;
     final seconds = _secondsLeft % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
+  // ── Timer progress for CircularProgressIndicator
+  double get _timerProgress => _secondsLeft / _totalSeconds;
+
   @override
   Widget build(BuildContext context) {
+    final urgentColor = _secondsLeft < 60 ? widget.T.red : widget.T.cyan;
+
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'OTP Screen Timer Demo',
+              'OTP Screen Timer Helpers',
               style: TextStyle(
                 fontSize: 18,
                 color: widget.T.text,
@@ -87,12 +88,25 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            // ── Timer display
             Text(
               _timerDisplay,
               style: TextStyle(
                 fontSize: 28,
-                color: _secondsLeft < 60 ? widget.T.red : widget.T.cyan,
+                color: urgentColor,
                 fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            // ── Timer progress ring example
+            SizedBox(
+              width: 80,
+              height: 80,
+              child: CircularProgressIndicator(
+                value: _timerProgress,
+                strokeWidth: 6,
+                backgroundColor: widget.T.border,
+                valueColor: AlwaysStoppedAnimation(urgentColor),
               ),
             ),
             const SizedBox(height: 10),
