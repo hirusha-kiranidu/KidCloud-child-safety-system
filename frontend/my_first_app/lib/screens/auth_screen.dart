@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 
-// Signup Screen
+// ── Signup Screen ─────────────────────────────────────────
 class SignupScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -35,7 +35,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   String get _strengthLabel {
     final l = _pass.text.length;
-    if (l >= 8) return "Strong";
+    if (l >= 8) return "Strong ✓";
     if (l >= 4) return "Medium";
     return "Weak";
   }
@@ -65,7 +65,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   _step == 1 ? widget.go("welcome") : setState(() => _step = 1),
               T: T,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
+
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -104,11 +105,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _phone,
                       T: T,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     PrimaryBtn(
                       label: "Continue →",
                       onTap: () => setState(() => _step = 2),
                       T: T,
+                      gradient: LinearGradient(colors: [T.cyan, T.blue]),
                     ),
                   ] else ...[
                     KCInput(
@@ -127,41 +129,39 @@ class _SignupScreenState extends State<SignupScreen> {
                       obscure: !_showPass,
                       T: T,
                     ),
-                    ValueListenableBuilder(
-                      valueListenable: _pass,
-                      builder: (_, __, ___) => Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: T.border),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Password Strength",
-                              style: TextStyle(
-                                color: T.sub,
-                                fontSize: 13,
-                                fontFamily: font,
-                              ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: T.border),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Password Strength",
+                            style: TextStyle(
+                              color: T.sub,
+                              fontSize: 13,
+                              fontFamily: font,
                             ),
-                            Text(
-                              _strengthLabel,
-                              style: TextStyle(
-                                color: _strengthColor,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          ),
+                          Text(
+                            _strengthLabel,
+                            style: TextStyle(
+                              color: _strengthColor,
+                              fontWeight: FontWeight.w800,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Checkbox(
@@ -169,18 +169,21 @@ class _SignupScreenState extends State<SignupScreen> {
                           onChanged: (v) => setState(() => _agreed = v!),
                         ),
                         const Expanded(
-                          child: Text("I agree to Terms and Privacy Policy"),
+                          child: Text(
+                            "I agree to Terms of Service & Privacy Policy",
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     PrimaryBtn(
                       label: "Create Account 🎉",
                       onTap: () => widget.go("otp"),
                       T: T,
+                      gradient: LinearGradient(colors: [T.cyan, T.blue]),
                     ),
                   ],
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   GestureDetector(
                     onTap: () => widget.go("login"),
                     child: const Center(
@@ -197,7 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 }
 
-// Login Screen
+// ── Login Screen ─────────────────────────────────────────
 class LoginScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -252,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 children: [
                   KCInput(
-                    label: "Email",
+                    label: "Email or Phone",
                     placeholder: "you@email.com",
                     icon: "✉️",
                     T: T,
@@ -276,6 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     label: "Sign In →",
                     onTap: () => widget.go("otp"),
                     T: T,
+                    gradient: LinearGradient(colors: [T.cyan, T.blue]),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -297,6 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: "Google",
                           onTap: () => widget.go("otp"),
                           T: T,
+                          gradient: LinearGradient(colors: [T.cyan, T.blue]),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -306,6 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: "Apple",
                           onTap: () => widget.go("otp"),
                           T: T,
+                          gradient: LinearGradient(colors: [T.cyan, T.blue]),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -315,6 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: "Facebook",
                           onTap: () => widget.go("otp"),
                           T: T,
+                          gradient: LinearGradient(colors: [T.cyan, T.blue]),
                         ),
                       ),
                     ],
@@ -334,18 +341,20 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// Social Button
+// ── Social Button ─────────────────────────────────────────
 class _SocialBtn extends StatelessWidget {
   final String icon;
   final String label;
   final VoidCallback onTap;
   final AppTheme T;
+  final Gradient? gradient;
 
   const _SocialBtn({
     required this.icon,
     required this.label,
     required this.onTap,
     required this.T,
+    this.gradient,
   });
 
   @override
@@ -356,12 +365,21 @@ class _SocialBtn extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(color: T.border),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
+          gradient: gradient,
         ),
         child: Column(
           children: [
             Text(icon, style: const TextStyle(fontSize: 22)),
-            Text(label),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                fontFamily: GoogleFonts.nunito().fontFamily,
+              ),
+            ),
           ],
         ),
       ),
