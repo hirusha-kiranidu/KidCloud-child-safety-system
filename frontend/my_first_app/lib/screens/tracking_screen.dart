@@ -87,6 +87,97 @@ class TrackingScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
+
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: T.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: T.border),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "${c.avatar} ${c.name}'s Location",
+                      style: TextStyle(
+                        color: T.text,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Pill(text: '● LIVE', color: T.green),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 2.5,
+                  children: [
+                    _InfoTile(
+                      label: 'Zone',
+                      val: c.status,
+                      color: T.green,
+                      T: T,
+                    ),
+                    _InfoTile(
+                      label: 'Speed',
+                      val: '0.0 km/h',
+                      color: T.blue,
+                      T: T,
+                    ),
+                    _InfoTile(
+                      label: 'Lat',
+                      val: '3.139°N',
+                      color: T.cyan,
+                      T: T,
+                    ),
+                    _InfoTile(
+                      label: 'Lng',
+                      val: '101.686°E',
+                      color: T.cyan,
+                      T: T,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: PrimaryBtn(
+                        label: '📍 Navigate',
+                        onTap: () {},
+                        T: T,
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    Expanded(
+                      child: PrimaryBtn(
+                        label: '🗓 History',
+                        onTap: () => go('route'),
+                        T: T,
+                        ghost: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
         ],
       ),
     );
