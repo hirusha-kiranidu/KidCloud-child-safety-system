@@ -31,6 +31,10 @@ class TrackingScreen extends StatelessWidget {
             T: T,
             rightEl: Pill(text: '${c.avatar} ${c.name}', color: color),
           ),
+
+          MapPlaceholder(height: 200, showRoute: true, showZones: true, T: T),
+
+          const SizedBox(height: 12),
         ],
       ),
     );
