@@ -20,6 +20,9 @@ class TrackingScreen extends StatelessWidget {
     final c = child ?? kidsData[0];
     final color = Color(c.colorHex);
 
-    return Container();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      child: Column(children: []),
+    );
   }
 }
