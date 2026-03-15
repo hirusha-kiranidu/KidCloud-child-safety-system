@@ -36,6 +36,7 @@ class TrackingScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
+          // Child Switcher
           Row(
             children: kidsData.map((k) {
               final kc = Color(k.colorHex);
@@ -88,6 +89,7 @@ class TrackingScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
+          // Info Card
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -178,6 +180,45 @@ class TrackingScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  final String label, val;
+  final Color color;
+  final AppTheme T;
+
+  const _InfoTile({
+    required this.label,
+    required this.val,
+    required this.color,
+    required this.T,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: T.card2,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(label, style: TextStyle(color: T.sub, fontSize: 10)),
+          Text(
+            val,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
