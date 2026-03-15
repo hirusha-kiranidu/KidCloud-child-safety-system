@@ -4,7 +4,16 @@ import '../models.dart';
 import '../widgets/shared_widgets.dart';
 
 class TrackingScreen extends StatelessWidget {
-  const TrackingScreen({super.key});
+  final ChildModel? child;
+  final Function(String) go;
+  final AppTheme T;
+
+  const TrackingScreen({
+    super.key,
+    this.child,
+    required this.go,
+    required this.T,
+  });
 
   @override
   Widget build(BuildContext context) {
