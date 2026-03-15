@@ -15,6 +15,8 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  int _step = 1;
+
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
@@ -46,9 +48,9 @@ class _SignupScreenState extends State<SignupScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
+          colors: [T.bgTop, T.bgBottom],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [T.bgTop, T.bgBottom],
         ),
       ),
       child: SingleChildScrollView(
@@ -58,8 +60,9 @@ class _SignupScreenState extends State<SignupScreen> {
           children: [
             KCTopBar(
               title: "Create Account",
-              sub: "Sign up to continue",
-              onBack: () => widget.go("welcome"),
+              sub: "Step $_step of 2",
+              onBack: () =>
+                  _step == 1 ? widget.go("welcome") : setState(() => _step = 1),
               T: T,
             ),
             const SizedBox(height: 20),
@@ -79,95 +82,104 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               child: Column(
                 children: [
-                  KCInput(
-                    label: "Full Name",
-                    placeholder: "Alex Johnson",
-                    icon: "👤",
-                    controller: _name,
-                    T: T,
-                  ),
-                  KCInput(
-                    label: "Email",
-                    placeholder: "you@email.com",
-                    icon: "✉️",
-                    controller: _email,
-                    T: T,
-                  ),
-                  KCInput(
-                    label: "Phone",
-                    placeholder: "+94 7X XXX XXXX",
-                    icon: "📱",
-                    controller: _phone,
-                    T: T,
-                  ),
-                  KCInput(
-                    label: "Password",
-                    placeholder: "Enter password",
-                    icon: "🔒",
-                    controller: _pass,
-                    obscure: !_showPass,
-                    T: T,
-                  ),
-                  ValueListenableBuilder(
-                    valueListenable: _pass,
-                    builder: (_, __, ___) => Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: T.border),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Password Strength",
-                            style: TextStyle(
-                              color: T.sub,
-                              fontSize: 13,
-                              fontFamily: font,
+                  if (_step == 1) ...[
+                    KCInput(
+                      label: "Full Name",
+                      placeholder: "Alex Johnson",
+                      icon: "👤",
+                      controller: _name,
+                      T: T,
+                    ),
+                    KCInput(
+                      label: "Email",
+                      placeholder: "you@email.com",
+                      icon: "✉️",
+                      controller: _email,
+                      T: T,
+                    ),
+                    KCInput(
+                      label: "Phone",
+                      placeholder: "+94 7X XXX XXXX",
+                      icon: "📱",
+                      controller: _phone,
+                      T: T,
+                    ),
+                    const SizedBox(height: 12),
+                    PrimaryBtn(
+                      label: "Continue →",
+                      onTap: () => setState(() => _step = 2),
+                      T: T,
+                    ),
+                  ] else ...[
+                    KCInput(
+                      label: "Password",
+                      placeholder: "Enter password",
+                      icon: "🔒",
+                      controller: _pass,
+                      obscure: !_showPass,
+                      T: T,
+                    ),
+                    KCInput(
+                      label: "Confirm Password",
+                      placeholder: "Re-enter password",
+                      icon: "🔐",
+                      controller: _confirm,
+                      obscure: !_showPass,
+                      T: T,
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: _pass,
+                      builder: (_, __, ___) => Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: T.border),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Password Strength",
+                              style: TextStyle(
+                                color: T.sub,
+                                fontSize: 13,
+                                fontFamily: font,
+                              ),
                             ),
-                          ),
-                          Text(
-                            _strengthLabel,
-                            style: TextStyle(
-                              color: _strengthColor,
-                              fontWeight: FontWeight.w800,
+                            Text(
+                              _strengthLabel,
+                              style: TextStyle(
+                                color: _strengthColor,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  KCInput(
-                    label: "Confirm Password",
-                    placeholder: "Re-enter password",
-                    icon: "🔐",
-                    controller: _confirm,
-                    obscure: !_showPass,
-                    T: T,
-                  ),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _agreed,
-                        onChanged: (v) => setState(() => _agreed = v!),
-                      ),
-                      const Expanded(
-                        child: Text("I agree to Terms and Privacy Policy"),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  PrimaryBtn(
-                    label: "Create Account",
-                    onTap: () => widget.go("otp"),
-                    T: T,
-                  ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _agreed,
+                          onChanged: (v) => setState(() => _agreed = v!),
+                        ),
+                        const Expanded(
+                          child: Text("I agree to Terms and Privacy Policy"),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    PrimaryBtn(
+                      label: "Create Account 🎉",
+                      onTap: () => widget.go("otp"),
+                      T: T,
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   GestureDetector(
                     onTap: () => widget.go("login"),
@@ -261,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   PrimaryBtn(
-                    label: "Sign In",
+                    label: "Sign In →",
                     onTap: () => widget.go("otp"),
                     T: T,
                   ),
@@ -280,15 +292,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _SocialBtn(icon: "🔵", label: "Google", T: T),
+                        child: _SocialBtn(
+                          icon: "🔵",
+                          label: "Google",
+                          onTap: () => widget.go("otp"),
+                          T: T,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: _SocialBtn(icon: "🍎", label: "Apple", T: T),
+                        child: _SocialBtn(
+                          icon: "🍎",
+                          label: "Apple",
+                          onTap: () => widget.go("otp"),
+                          T: T,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: _SocialBtn(icon: "📘", label: "Facebook", T: T),
+                        child: _SocialBtn(
+                          icon: "📘",
+                          label: "Facebook",
+                          onTap: () => widget.go("otp"),
+                          T: T,
+                        ),
                       ),
                     ],
                   ),
@@ -311,23 +338,32 @@ class _LoginScreenState extends State<LoginScreen> {
 class _SocialBtn extends StatelessWidget {
   final String icon;
   final String label;
+  final VoidCallback onTap;
   final AppTheme T;
 
-  const _SocialBtn({required this.icon, required this.label, required this.T});
+  const _SocialBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.T,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: T.border),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 22)),
-          Text(label),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: T.border),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 22)),
+            Text(label),
+          ],
+        ),
       ),
     );
   }
