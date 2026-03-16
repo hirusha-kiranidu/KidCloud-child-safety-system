@@ -114,7 +114,6 @@ class _OtpScreenState extends State<OtpScreen>
       _isError = false;
     });
 
-    // Demo delay simulating API call
     await Future.delayed(const Duration(seconds: 2));
 
     _timer.cancel();
@@ -194,6 +193,7 @@ class _OtpScreenState extends State<OtpScreen>
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
+    final urgentColor = (_secondsLeft < 60 && !_canResend) ? T.red : T.cyan;
 
     return Container(
       decoration: BoxDecoration(
@@ -209,7 +209,7 @@ class _OtpScreenState extends State<OtpScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Back + shield icon (previous commits)
+              // ── Back button and shield icon (previous commits)
               Row(
                 children: [
                   GestureDetector(
@@ -272,7 +272,7 @@ class _OtpScreenState extends State<OtpScreen>
               ),
               const SizedBox(height: 22),
 
-              // ── Commit 14: OTP header and phone info ─────────
+              // ── Commit 14: OTP header and phone info
               Center(
                 child: Column(
                   children: [
@@ -312,7 +312,61 @@ class _OtpScreenState extends State<OtpScreen>
               ),
               const SizedBox(height: 28),
 
-              // ── The rest of OTP boxes, timer, buttons follow next commits
+              // ── Commit 15: countdown ring UI
+              Center(
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: CircularProgressIndicator(
+                            value: _timerProgress,
+                            strokeWidth: 6,
+                            backgroundColor: T.border,
+                            valueColor: AlwaysStoppedAnimation(urgentColor),
+                          ),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _canResend ? '0:00' : _timerDisplay,
+                              style: TextStyle(
+                                color: urgentColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              _canResend ? 'Expired' : 'left',
+                              style: TextStyle(
+                                color: _canResend ? T.red : T.sub,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _canResend
+                          ? 'Code expired — tap Resend'
+                          : (_secondsLeft < 60
+                                ? '⚠️  Expiring soon!'
+                                : 'Code valid for 5 minutes'),
+                      style: TextStyle(
+                        color: urgentColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
