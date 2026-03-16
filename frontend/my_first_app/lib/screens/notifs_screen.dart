@@ -327,3 +327,47 @@ class _AlertHistoryScreenState extends State<AlertHistoryScreen> {
     return Container();
   }
 }
+
+class _SummaryCard extends StatelessWidget {
+  final String icon, label;
+  final int val;
+  final Color color;
+  final AppTheme T;
+
+  const _SummaryCard({
+    required this.icon,
+    required this.val,
+    required this.label,
+    required this.color,
+    required this.T,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: T.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: T.border),
+        ),
+        child: Column(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 4),
+            Text(
+              '$val',
+              style: TextStyle(
+                color: color,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            Text(label, style: TextStyle(color: T.sub, fontSize: 10)),
+          ],
+        ),
+      ),
+    );
+  }
+}
