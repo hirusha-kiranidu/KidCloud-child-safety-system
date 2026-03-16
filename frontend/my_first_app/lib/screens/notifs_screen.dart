@@ -100,6 +100,16 @@ class _NotifsScreenState extends State<NotifsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final T = widget.T;
+
+    final cats = ['All', 'Urgent', 'Emma', 'Liam'];
+
+    final filtered = _filter == 'All'
+        ? _notifs
+        : _filter == 'Urgent'
+        ? _notifs.where((n) => n['urgent'] == true).toList()
+        : _notifs.where((n) => n['child'] == _filter).toList();
+
     return Container();
   }
 }
