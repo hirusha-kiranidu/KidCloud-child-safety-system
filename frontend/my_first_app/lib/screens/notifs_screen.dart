@@ -162,7 +162,6 @@ class _NotifsScreenState extends State<NotifsScreen> {
 
           const SizedBox(height: 14),
 
-          // Filter Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -197,6 +196,89 @@ class _NotifsScreenState extends State<NotifsScreen> {
               }).toList(),
             ),
           ),
+
+          const SizedBox(height: 14),
+
+          ...filtered.map((n) {
+            final color = Color(n['colorHex'] as int);
+            final isUrgent = n['urgent'] as bool;
+
+            return GestureDetector(
+              onTap: isUrgent ? () => widget.go('voice_alert') : null,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: T.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isUrgent ? color.withOpacity(0.33) : T.border,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.11),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          n['icon'] as String,
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            n['title'] as String,
+                            style: TextStyle(
+                              color: isUrgent ? color : T.text,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            n['desc'] as String,
+                            style: TextStyle(color: T.sub, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          n['time'] as String,
+                          style: TextStyle(color: T.muted, fontSize: 10),
+                        ),
+                        if (isUrgent) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );
