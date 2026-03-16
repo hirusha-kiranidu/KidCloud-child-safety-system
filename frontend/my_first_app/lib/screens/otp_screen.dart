@@ -95,6 +95,7 @@ class _OtpScreenState extends State<OtpScreen>
     });
     _timer.cancel();
     _startTimer();
+    // TODO: call your resend OTP API here
   }
 
   String get _otpCode => _controllers.map((c) => c.text).join();
@@ -113,6 +114,7 @@ class _OtpScreenState extends State<OtpScreen>
       _isError = false;
     });
 
+    // Demo delay simulating API call
     await Future.delayed(const Duration(seconds: 2));
 
     _timer.cancel();
@@ -174,9 +176,9 @@ class _OtpScreenState extends State<OtpScreen>
         onChanged: (val) {
           setState(() => _isError = false);
           if (val.isNotEmpty) {
-            if (index < 5)
+            if (index < 5) {
               _focusNodes[index + 1].requestFocus();
-            else {
+            } else {
               _focusNodes[index].unfocus();
               _verifyOtp();
             }
@@ -192,14 +194,13 @@ class _OtpScreenState extends State<OtpScreen>
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
-    final urgentColor = (_secondsLeft < 60 && !_canResend) ? T.red : T.cyan;
 
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
+          colors: [T.bgTop, T.bgBottom],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [T.bgTop, T.bgBottom],
         ),
       ),
       child: SafeArea(
@@ -208,7 +209,7 @@ class _OtpScreenState extends State<OtpScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Top back + title
+              // ── Back + shield icon (previous commits)
               Row(
                 children: [
                   GestureDetector(
@@ -245,8 +246,6 @@ class _OtpScreenState extends State<OtpScreen>
                 ],
               ),
               const SizedBox(height: 32),
-
-              // ── Shield icon (commit 13) ─────────────
               Center(
                 child: Container(
                   width: 96,
@@ -273,45 +272,47 @@ class _OtpScreenState extends State<OtpScreen>
               ),
               const SizedBox(height: 22),
 
-              // ── OTP title and description (to be next commits)
+              // ── Commit 14: OTP header and phone info ─────────
               Center(
-                child: Text(
-                  'OTP Verification',
-                  style: TextStyle(
-                    color: T.text,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: TextStyle(color: T.sub, fontSize: 14, height: 1.6),
-                    children: [
-                      const TextSpan(text: 'We sent a 6-digit code to\n'),
-                      TextSpan(
-                        text: widget.phoneNumber,
-                        style: TextStyle(
-                          color: T.cyan,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
+                child: Column(
+                  children: [
+                    Text(
+                      'OTP Verification',
+                      style: TextStyle(
+                        color: T.text,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: T.sub,
+                          fontSize: 14,
+                          height: 1.6,
+                        ),
+                        children: [
+                          const TextSpan(text: 'We sent a 6-digit code to\n'),
+                          TextSpan(
+                            text: widget.phoneNumber,
+                            style: TextStyle(
+                              color: T.cyan,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 28),
 
-              // ── OTP boxes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (i) => _buildOtpBox(i)),
-              ),
+              // ── The rest of OTP boxes, timer, buttons follow next commits
             ],
           ),
         ),
