@@ -3,7 +3,10 @@ import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 
 class NotifsScreen extends StatefulWidget {
-  const NotifsScreen({super.key});
+  final Function(String) go;
+  final AppTheme T;
+
+  const NotifsScreen({super.key, required this.go, required this.T});
 
   @override
   State<NotifsScreen> createState() => _NotifsScreenState();
