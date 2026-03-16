@@ -73,7 +73,6 @@ class OnboardScreen extends StatelessWidget {
 
           const SizedBox(height: 40),
 
-          // Animated Progress Dots
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
@@ -93,7 +92,6 @@ class OnboardScreen extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // ✅ Navigation Buttons
           PrimaryBtn(
             label: idx < 2 ? 'Next →' : 'Get Started 🚀',
             onTap: () =>
@@ -119,8 +117,114 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: const Center(
-        child: Text("Welcome Screen"),
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: const Alignment(0, -1),
+          radius: 1.2,
+          colors: [const Color(0xFF0A2448), T.bg],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 44, 24, 36),
+        child: Column(
+          children: [
+            const Spacer(),
+
+            const Text('👨‍👧‍👦', style: TextStyle(fontSize: 60)),
+
+            const SizedBox(height: 18),
+
+            RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2),
+                children: [
+                  TextSpan(
+                    text: 'Welcome to\n',
+                    style: TextStyle(color: T.text),
+                  ),
+                  TextSpan(
+                    text: 'KidCloud',
+                    style: TextStyle(color: T.cyan),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              "Your child's safety, always in\n"
+              "the palm of your hand.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: T.sub, fontSize: 14, height: 1.8),
+            ),
+
+            const SizedBox(height: 36),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final item in [
+                  ['🔒', 'Secure'],
+                  ['📍', 'Accurate'],
+                  ['⚡', 'Real-Time']
+                ]) ...[
+                  Column(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: T.cyan.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: T.cyan.withOpacity(0.2)),
+                        ),
+                        child: Center(
+                          child: Text(
+                            item[0],
+                            style: const TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        item[1],
+                        style: TextStyle(
+                          color: T.sub,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item[0] != '⚡') const SizedBox(width: 24),
+                ],
+              ],
+            ),
+
+            const Spacer(),
+
+            PrimaryBtn(
+              label: 'Create Account',
+              onTap: () => go('signup'),
+              T: T,
+            ),
+
+            const SizedBox(height: 10),
+
+            PrimaryBtn(
+              label: 'Sign In',
+              onTap: () => go('login'),
+              T: T,
+              outline: true,
+            ),
+          ],
+        ),
       ),
     );
   }
