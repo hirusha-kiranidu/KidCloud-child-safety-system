@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -11,7 +12,7 @@ class OtpScreen extends StatefulWidget {
     super.key,
     required this.go,
     required this.T,
-    this.phoneNumber = '+94 7X XXX XXXX',
+    this.phoneNumber = '+60 1X XXX XXXX',
   });
 
   @override
@@ -20,17 +21,20 @@ class OtpScreen extends StatefulWidget {
 
 class _OtpScreenState extends State<OtpScreen>
     with SingleTickerProviderStateMixin {
-  late final List<TextEditingController> _controllers;
-  late final List<FocusNode> _focusNodes;
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   static const int _totalSeconds = 300;
   int _secondsLeft = _totalSeconds;
-  bool _canResend = false;
   late Timer _timer;
+  bool _canResend = false;
 
+  bool _isVerifying = false;
   bool _isSuccess = false;
   bool _isError = false;
-  bool _isVerifying = false;
   String _errorMsg = '';
 
   late AnimationController _shakeCtrl;
@@ -39,32 +43,33 @@ class _OtpScreenState extends State<OtpScreen>
   @override
   void initState() {
     super.initState();
-
-    _controllers = List.generate(6, (_) => TextEditingController());
-    _focusNodes = List.generate(6, (_) => FocusNode());
-
     _startTimer();
-
     _shakeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
     _shakeAnim = Tween(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
   }
 
+  @override
+  void dispose() {
+    for (final c in _controllers) c.dispose();
+    for (final f in _focusNodes) f.dispose();
+    _timer.cancel();
+    _shakeCtrl.dispose();
+    super.dispose();
+  }
+
   void _startTimer() {
     _secondsLeft = _totalSeconds;
     _canResend = false;
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
-
       if (_secondsLeft == 0) {
-        timer.cancel();
+        t.cancel();
         setState(() => _canResend = true);
       } else {
         setState(() => _secondsLeft--);
@@ -80,37 +85,29 @@ class _OtpScreenState extends State<OtpScreen>
 
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
-  String get _otpCode => _controllers.map((c) => c.text).join();
-
   void _resendOtp() {
     if (!_canResend) return;
-
-    for (final c in _controllers) {
-      c.clear();
-    }
-
+    for (final c in _controllers) c.clear();
     _focusNodes[0].requestFocus();
-
     setState(() {
       _isError = false;
       _errorMsg = '';
     });
-
     _timer.cancel();
     _startTimer();
   }
+
+  String get _otpCode => _controllers.map((c) => c.text).join();
 
   void _verifyOtp() async {
     if (_otpCode.length < 6) {
       setState(() {
         _isError = true;
-        _errorMsg = "Please enter all 6 digits";
+        _errorMsg = 'Please enter all 6 digits';
       });
-
       _shakeCtrl.forward(from: 0);
       return;
     }
-
     setState(() {
       _isVerifying = true;
       _isError = false;
@@ -118,161 +115,204 @@ class _OtpScreenState extends State<OtpScreen>
 
     await Future.delayed(const Duration(seconds: 2));
 
+    _timer.cancel();
     setState(() {
       _isVerifying = false;
       _isSuccess = true;
     });
-
-    await Future.delayed(const Duration(seconds: 1));
-
+    await Future.delayed(const Duration(milliseconds: 1400));
     if (mounted) widget.go('dashboard');
   }
 
-  @override
-  void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
+  Widget _buildOtpBox(int index) {
+    final T = widget.T;
+    final isFilled = _controllers[index].text.isNotEmpty;
+
+    Color borderColor;
+    Color textColor;
+    if (_isError) {
+      borderColor = T.red;
+      textColor = T.red;
+    } else if (_isSuccess) {
+      borderColor = T.green;
+      textColor = T.green;
+    } else if (isFilled) {
+      borderColor = T.cyan;
+      textColor = T.cyan;
+    } else {
+      borderColor = T.border;
+      textColor = T.text;
     }
 
-    for (final f in _focusNodes) {
-      f.dispose();
-    }
-
-    _timer.cancel();
-    _shakeCtrl.dispose();
-
-    super.dispose();
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 46,
+      height: 58,
+      decoration: BoxDecoration(
+        color: isFilled ? T.cyan.withOpacity(0.08) : T.card2,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 2),
+        boxShadow: isFilled
+            ? [BoxShadow(color: T.cyan.withOpacity(0.2), blurRadius: 12)]
+            : null,
+      ),
+      child: TextField(
+        controller: _controllers[index],
+        focusNode: _focusNodes[index],
+        textAlign: TextAlign.center,
+        keyboardType: TextInputType.number,
+        maxLength: 1,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 24,
+          fontWeight: FontWeight.w800,
+        ),
+        decoration: const InputDecoration(
+          counterText: '',
+          border: InputBorder.none,
+        ),
+        onChanged: (val) {
+          setState(() => _isError = false);
+          if (val.isNotEmpty) {
+            if (index < 5)
+              _focusNodes[index + 1].requestFocus();
+            else {
+              _focusNodes[index].unfocus();
+              _verifyOtp();
+            }
+          } else {
+            if (index > 0) _focusNodes[index - 1].requestFocus();
+          }
+          setState(() {});
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final urgentColor = (_secondsLeft < 60 && !_canResend)
-        ? widget.T.red
-        : widget.T.cyan;
+    final T = widget.T;
+    final urgentColor = (_secondsLeft < 60 && !_canResend) ? T.red : T.cyan;
 
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [widget.T.mint, widget.T.cyan],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [T.bgTop, T.bgBottom],
         ),
-
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ─── Back Button ───
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  color: widget.T.text,
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-
-                const SizedBox(height: 10),
-
-                // ─── Title ───
-                Text(
-                  "Verify Phone",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: widget.T.text,
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Top back + title
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => widget.go('signup'),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: T.card2,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: T.border),
+                      ),
+                      child: Icon(Icons.chevron_left, color: T.text, size: 24),
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // ─── Description ───
-                Text(
-                  "Enter the 6-digit code sent to ${widget.phoneNumber}",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: widget.T.text.withOpacity(0.7),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                Center(
-                  child: Column(
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _timerDisplay,
+                        'Verify Phone 📱',
                         style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: urgentColor,
+                          color: T.text,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
+                      Text(
+                        'Enter the 6-digit code we sent you',
+                        style: TextStyle(color: T.sub, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
 
-                      const SizedBox(height: 20),
+              // ── Shield icon (commit 13) ─────────────
+              Center(
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [T.cyan, T.blue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: T.cyan.withOpacity(0.4),
+                        blurRadius: 40,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text('🔐', style: TextStyle(fontSize: 44)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 22),
 
-                      SizedBox(
-                        width: 90,
-                        height: 90,
-                        child: CircularProgressIndicator(
-                          value: _timerProgress,
-                          strokeWidth: 6,
-                          backgroundColor: widget.T.border,
-                          valueColor: AlwaysStoppedAnimation(urgentColor),
+              // ── OTP title and description (to be next commits)
+              Center(
+                child: Text(
+                  'OTP Verification',
+                  style: TextStyle(
+                    color: T.text,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: TextStyle(color: T.sub, fontSize: 14, height: 1.6),
+                    children: [
+                      const TextSpan(text: 'We sent a 6-digit code to\n'),
+                      TextSpan(
+                        text: widget.phoneNumber,
+                        style: TextStyle(
+                          color: T.cyan,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
                         ),
                       ),
-
-                      const SizedBox(height: 30),
-
-                      ElevatedButton(
-                        onPressed: _isVerifying ? null : _verifyOtp,
-                        child: _isVerifying
-                            ? const CircularProgressIndicator()
-                            : const Text("Verify OTP"),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      ElevatedButton(
-                        onPressed: _canResend ? _resendOtp : null,
-                        child: Text(
-                          _canResend
-                              ? "Resend OTP"
-                              : "Resend in $_timerDisplay",
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      if (_isError)
-                        Text(
-                          _errorMsg,
-                          style: TextStyle(
-                            color: widget.T.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                      if (_isSuccess)
-                        Text(
-                          "OTP Verified Successfully!",
-                          style: TextStyle(
-                            color: widget.T.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 28),
+
+              // ── OTP boxes
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(6, (i) => _buildOtpBox(i)),
+              ),
+            ],
           ),
         ),
       ),
