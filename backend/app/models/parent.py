@@ -4,7 +4,7 @@ Parent model for KidCloud.
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from app.database import Base
 
