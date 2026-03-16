@@ -24,7 +24,7 @@ class _OtpScreenState extends State<OtpScreen>
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
 
-  // Timer variables
+  // Timer
   static const int _totalSeconds = 300;
   int _secondsLeft = _totalSeconds;
   bool _canResend = false;
@@ -36,7 +36,7 @@ class _OtpScreenState extends State<OtpScreen>
   bool _isVerifying = false;
   String _errorMsg = '';
 
-  // ── Shake animation (Commit 9)
+  // Shake animation
   late AnimationController _shakeCtrl;
   late Animation<double> _shakeAnim;
 
@@ -49,7 +49,6 @@ class _OtpScreenState extends State<OtpScreen>
 
     _startTimer();
 
-    // Initialize shake animation
     _shakeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -59,15 +58,6 @@ class _OtpScreenState extends State<OtpScreen>
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
-  }
-
-  @override
-  void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
-    _timer.cancel();
-    _shakeCtrl.dispose();
-    super.dispose();
   }
 
   // Timer start
@@ -97,7 +87,7 @@ class _OtpScreenState extends State<OtpScreen>
   // Timer progress
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
-  // OTP code helper
+  // OTP code
   String get _otpCode => _controllers.map((c) => c.text).join();
 
   // Resend OTP
@@ -127,7 +117,7 @@ class _OtpScreenState extends State<OtpScreen>
         _errorMsg = "Please enter all 6 digits";
       });
 
-      _shakeCtrl.forward(from: 0); // trigger shake
+      _shakeCtrl.forward(from: 0);
       return;
     }
 
@@ -146,6 +136,27 @@ class _OtpScreenState extends State<OtpScreen>
     await Future.delayed(const Duration(seconds: 1));
 
     if (mounted) widget.go('dashboard');
+  }
+
+  @override
+  void dispose() {
+    // Dispose controllers
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+
+    // Dispose focus nodes
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
+
+    // Cancel timer
+    _timer.cancel();
+
+    // Dispose animation controller
+    _shakeCtrl.dispose();
+
+    super.dispose();
   }
 
   @override
