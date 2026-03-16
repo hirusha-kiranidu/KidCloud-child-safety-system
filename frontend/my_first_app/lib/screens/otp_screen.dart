@@ -29,7 +29,8 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _canResend = false;
   late Timer _timer;
 
-  // Error flag
+  // Verification states
+  bool _isVerifying = false;
   bool _isError = false;
   String _errorMsg = '';
 
@@ -82,9 +83,7 @@ class _OtpScreenState extends State<OtpScreen> {
   // Timer progress helper
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
-  // ═══════════════════════════════
-  // OTP CODE HELPER (Commit 6)
-  // ═══════════════════════════════
+  // OTP code helper
   String get _otpCode => _controllers.map((c) => c.text).join();
 
   // Resend OTP logic
@@ -104,8 +103,34 @@ class _OtpScreenState extends State<OtpScreen> {
 
     _timer.cancel();
     _startTimer();
+  }
 
-    // TODO: call resend API
+  // ═══════════════════════════════
+  // VERIFY OTP (Commit 7)
+  // ═══════════════════════════════
+  void _verifyOtp() async {
+    if (_otpCode.length < 6) {
+      setState(() {
+        _isError = true;
+        _errorMsg = "Please enter all 6 digits";
+      });
+      return;
+    }
+
+    setState(() {
+      _isVerifying = true;
+      _isError = false;
+    });
+
+    // Demo API delay
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() {
+      _isVerifying = false;
+    });
+
+    // Demo success navigation
+    widget.go('dashboard');
   }
 
   @override
@@ -120,7 +145,7 @@ class _OtpScreenState extends State<OtpScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "OTP Timer",
+              "OTP Verification",
               style: TextStyle(
                 fontSize: 20,
                 color: widget.T.text,
@@ -155,19 +180,32 @@ class _OtpScreenState extends State<OtpScreen> {
             const SizedBox(height: 30),
 
             ElevatedButton(
+              onPressed: _isVerifying ? null : _verifyOtp,
+              child: _isVerifying
+                  ? const CircularProgressIndicator()
+                  : const Text("Verify OTP"),
+            ),
+
+            const SizedBox(height: 20),
+
+            ElevatedButton(
               onPressed: _canResend ? _resendOtp : null,
               child: Text(
                 _canResend ? "Resend OTP" : "Resend in $_timerDisplay",
               ),
             ),
 
-            const SizedBox(height: 20),
-
-            // Demo display of OTP code
-            Text(
-              "Entered OTP: $_otpCode",
-              style: TextStyle(color: widget.T.sub, fontSize: 14),
-            ),
+            if (_isError)
+              Padding(
+                padding: const EdgeInsets.only(top: 15),
+                child: Text(
+                  _errorMsg,
+                  style: TextStyle(
+                    color: widget.T.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
