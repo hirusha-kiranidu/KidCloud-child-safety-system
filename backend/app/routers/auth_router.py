@@ -2,12 +2,14 @@
 Authentication router for KidCloud.
 """
 
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.parent import Parent
-from app.schemas.auth_schema import ParentRegister
+from app.models.parent_otp import ParentOTP
+from app.schemas.auth_schema import OTPVerifyRequest, ParentRegister
 from app.services.auth.otp_service import create_otp
 from app.services.auth.password_service import hash_password
 
