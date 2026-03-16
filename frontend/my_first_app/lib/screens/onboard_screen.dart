@@ -40,9 +40,39 @@ class OnboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final data = _obData[idx];
+    final color = Color(data['color'] as int);
+
     return Container(
-      child: const Center(
-        child: Text("Onboarding Screen"),
+      color: T.bg,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              data['icon'] as String,
+              style: const TextStyle(fontSize: 60),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              data['title'] as String,
+              style: TextStyle(
+                color: T.text,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Text(
+                data['desc'] as String,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: T.sub, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
