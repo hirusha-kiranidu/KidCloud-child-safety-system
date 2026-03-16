@@ -13,6 +13,8 @@ class NotifsScreen extends StatefulWidget {
 }
 
 class _NotifsScreenState extends State<NotifsScreen> {
+  String _filter = 'All';
+
   @override
   Widget build(BuildContext context) {
     return Container();
