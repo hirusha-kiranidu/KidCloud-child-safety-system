@@ -22,4 +22,10 @@ while True:
     print("Audio captured")
 
     text = convert_audio_to_text(file_path)
+    print("Detected speech:", text)
+
+    if detect_danger(text):
+        print("⚠ STUDENT MAY BE IN DANGER")
+    else:
+        print("Student appears safe")
 
