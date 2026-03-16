@@ -73,7 +73,7 @@ class OnboardScreen extends StatelessWidget {
 
           const SizedBox(height: 40),
 
-          // ✅ Animated Progress Dots
+          // Animated Progress Dots
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
@@ -89,6 +89,16 @@ class OnboardScreen extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+
+          const SizedBox(height: 28),
+
+          // ✅ Navigation Buttons
+          PrimaryBtn(
+            label: idx < 2 ? 'Next →' : 'Get Started 🚀',
+            onTap: () =>
+                go(idx < 2 ? 'onboard${idx + 1}' : 'welcome'),
+            T: T,
           ),
         ],
       ),
