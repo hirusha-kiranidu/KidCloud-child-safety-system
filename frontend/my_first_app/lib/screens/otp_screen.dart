@@ -19,7 +19,7 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  // OTP Controllers
+  // OTP controllers
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
 
@@ -29,9 +29,10 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _canResend = false;
   late Timer _timer;
 
-  // Verification states
-  bool _isVerifying = false;
+  // ── Verification flags (Commit 8)
+  bool _isSuccess = false;
   bool _isError = false;
+  bool _isVerifying = false;
   String _errorMsg = '';
 
   @override
@@ -52,7 +53,7 @@ class _OtpScreenState extends State<OtpScreen> {
     super.dispose();
   }
 
-  // Start countdown timer
+  // Timer start
   void _startTimer() {
     _secondsLeft = _totalSeconds;
     _canResend = false;
@@ -62,31 +63,27 @@ class _OtpScreenState extends State<OtpScreen> {
 
       if (_secondsLeft == 0) {
         timer.cancel();
-        setState(() {
-          _canResend = true;
-        });
+        setState(() => _canResend = true);
       } else {
-        setState(() {
-          _secondsLeft--;
-        });
+        setState(() => _secondsLeft--);
       }
     });
   }
 
-  // Timer display helper
+  // Timer display
   String get _timerDisplay {
     final m = _secondsLeft ~/ 60;
     final s = _secondsLeft % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  // Timer progress helper
+  // Timer progress
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
   // OTP code helper
   String get _otpCode => _controllers.map((c) => c.text).join();
 
-  // Resend OTP logic
+  // Resend OTP
   void _resendOtp() {
     if (!_canResend) return;
 
@@ -105,9 +102,7 @@ class _OtpScreenState extends State<OtpScreen> {
     _startTimer();
   }
 
-  // ═══════════════════════════════
-  // VERIFY OTP (Commit 7)
-  // ═══════════════════════════════
+  // OTP verification
   void _verifyOtp() async {
     if (_otpCode.length < 6) {
       setState(() {
@@ -122,15 +117,19 @@ class _OtpScreenState extends State<OtpScreen> {
       _isError = false;
     });
 
-    // Demo API delay
+    // Fake API delay
     await Future.delayed(const Duration(seconds: 2));
 
     setState(() {
       _isVerifying = false;
+      _isSuccess = true;
     });
 
-    // Demo success navigation
-    widget.go('dashboard');
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (mounted) {
+      widget.go('dashboard');
+    }
   }
 
   @override
@@ -158,7 +157,7 @@ class _OtpScreenState extends State<OtpScreen> {
             Text(
               _timerDisplay,
               style: TextStyle(
-                fontSize: 30,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: urgentColor,
               ),
@@ -179,6 +178,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
             const SizedBox(height: 30),
 
+            // Verify button
             ElevatedButton(
               onPressed: _isVerifying ? null : _verifyOtp,
               child: _isVerifying
@@ -188,6 +188,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
             const SizedBox(height: 20),
 
+            // Resend button
             ElevatedButton(
               onPressed: _canResend ? _resendOtp : null,
               child: Text(
@@ -195,15 +196,25 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
             ),
 
+            const SizedBox(height: 20),
+
+            // Error message
             if (_isError)
-              Padding(
-                padding: const EdgeInsets.only(top: 15),
-                child: Text(
-                  _errorMsg,
-                  style: TextStyle(
-                    color: widget.T.red,
-                    fontWeight: FontWeight.bold,
-                  ),
+              Text(
+                _errorMsg,
+                style: TextStyle(
+                  color: widget.T.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+            // Success message
+            if (_isSuccess)
+              Text(
+                "OTP Verified Successfully!",
+                style: TextStyle(
+                  color: widget.T.green,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
           ],
