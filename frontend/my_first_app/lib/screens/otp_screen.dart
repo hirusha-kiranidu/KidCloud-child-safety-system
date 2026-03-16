@@ -83,30 +83,29 @@ class _OtpScreenState extends State<OtpScreen> {
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
   // ═══════════════════════════════
-  // RESEND OTP FUNCTION
+  // OTP CODE HELPER (Commit 6)
   // ═══════════════════════════════
+  String get _otpCode => _controllers.map((c) => c.text).join();
+
+  // Resend OTP logic
   void _resendOtp() {
     if (!_canResend) return;
 
-    // Clear OTP boxes
     for (final c in _controllers) {
       c.clear();
     }
 
-    // Focus first box
     _focusNodes[0].requestFocus();
 
-    // Reset errors
     setState(() {
       _isError = false;
       _errorMsg = '';
     });
 
-    // Restart timer
     _timer.cancel();
     _startTimer();
 
-    // TODO: call backend resend API
+    // TODO: call resend API
   }
 
   @override
@@ -160,6 +159,14 @@ class _OtpScreenState extends State<OtpScreen> {
               child: Text(
                 _canResend ? "Resend OTP" : "Resend in $_timerDisplay",
               ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Demo display of OTP code
+            Text(
+              "Entered OTP: $_otpCode",
+              style: TextStyle(color: widget.T.sub, fontSize: 14),
             ),
           ],
         ),
