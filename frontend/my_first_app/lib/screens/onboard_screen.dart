@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/shared_widgets.dart';
 
 class OnboardScreen extends StatelessWidget {
   final int idx;
