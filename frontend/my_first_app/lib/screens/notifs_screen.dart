@@ -231,9 +231,7 @@ class _NotifsScreenState extends State<NotifsScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +251,6 @@ class _NotifsScreenState extends State<NotifsScreen> {
                         ],
                       ),
                     ),
-
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -282,5 +279,25 @@ class _NotifsScreenState extends State<NotifsScreen> {
         ],
       ),
     );
+  }
+}
+
+// ── Alert History Screen ─────────────────────────────
+class AlertHistoryScreen extends StatefulWidget {
+  final Function(String) go;
+  final AppTheme T;
+
+  const AlertHistoryScreen({super.key, required this.go, required this.T});
+
+  @override
+  State<AlertHistoryScreen> createState() => _AlertHistoryScreenState();
+}
+
+class _AlertHistoryScreenState extends State<AlertHistoryScreen> {
+  String _filter = 'This Week';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }
