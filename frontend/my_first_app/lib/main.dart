@@ -28,25 +28,15 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
 
-    final T = AppTheme(
-      bg: Colors.white,
-      surface: Colors.grey[50]!,
-      card: Colors.white,
-      card2: Colors.grey[100]!,
-      border: Colors.grey[300]!,
-      text: Colors.black,
-      sub: Colors.grey[700]!,
-      muted: Colors.grey[500]!,
-      cyan: Colors.cyan,
-      cyanD: Colors.cyan[700]!,
-      blue: Colors.blue,
-      indigo: Colors.indigo,
-      green: Colors.green,
-      red: Colors.red,
-      orange: Colors.orange,
-      yellow: Colors.yellow,
-      pink: Colors.pink,
-    );
+   final T = AppTheme(
+  bgTop: Colors.blue.shade900,
+  bgBottom: Colors.blue.shade400,
+  border: Colors.grey,
+  text: Colors.white,
+  sub: Colors.white70,
+  cyan: Colors.cyan,
+  blue: Colors.blue,
+);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
