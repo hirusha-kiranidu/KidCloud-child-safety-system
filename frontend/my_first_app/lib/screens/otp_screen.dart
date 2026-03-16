@@ -11,7 +11,7 @@ class OtpScreen extends StatefulWidget {
     super.key,
     required this.go,
     required this.T,
-    this.phoneNumber = '+60 1X XXX XXXX',
+    this.phoneNumber = '+94 7X XXX XXXX',
   });
 
   @override
@@ -20,23 +20,19 @@ class OtpScreen extends StatefulWidget {
 
 class _OtpScreenState extends State<OtpScreen>
     with SingleTickerProviderStateMixin {
-  // OTP controllers
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
 
-  // Timer
   static const int _totalSeconds = 300;
   int _secondsLeft = _totalSeconds;
   bool _canResend = false;
   late Timer _timer;
 
-  // Verification flags
   bool _isSuccess = false;
   bool _isError = false;
   bool _isVerifying = false;
   String _errorMsg = '';
 
-  // Shake animation
   late AnimationController _shakeCtrl;
   late Animation<double> _shakeAnim;
 
@@ -60,7 +56,6 @@ class _OtpScreenState extends State<OtpScreen>
     ).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
   }
 
-  // Timer start
   void _startTimer() {
     _secondsLeft = _totalSeconds;
     _canResend = false;
@@ -77,20 +72,16 @@ class _OtpScreenState extends State<OtpScreen>
     });
   }
 
-  // Timer display
   String get _timerDisplay {
     final m = _secondsLeft ~/ 60;
     final s = _secondsLeft % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  // Timer progress
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
-  // OTP code
   String get _otpCode => _controllers.map((c) => c.text).join();
 
-  // Resend OTP
   void _resendOtp() {
     if (!_canResend) return;
 
@@ -109,7 +100,6 @@ class _OtpScreenState extends State<OtpScreen>
     _startTimer();
   }
 
-  // Verify OTP
   void _verifyOtp() async {
     if (_otpCode.length < 6) {
       setState(() {
@@ -140,12 +130,12 @@ class _OtpScreenState extends State<OtpScreen>
 
   @override
   void dispose() {
-    for (final controller in _controllers) {
-      controller.dispose();
+    for (final c in _controllers) {
+      c.dispose();
     }
 
-    for (final node in _focusNodes) {
-      node.dispose();
+    for (final f in _focusNodes) {
+      f.dispose();
     }
 
     _timer.cancel();
@@ -165,7 +155,6 @@ class _OtpScreenState extends State<OtpScreen>
         width: double.infinity,
         height: double.infinity,
 
-        // ── Gradient Background
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [widget.T.mint, widget.T.cyan],
@@ -174,81 +163,116 @@ class _OtpScreenState extends State<OtpScreen>
           ),
         ),
 
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "OTP Verification",
-                style: TextStyle(
-                  fontSize: 22,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ─── Back Button ───
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
                   color: widget.T.text,
-                  fontWeight: FontWeight.bold,
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 10),
 
-              Text(
-                _timerDisplay,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: urgentColor,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: 90,
-                height: 90,
-                child: CircularProgressIndicator(
-                  value: _timerProgress,
-                  strokeWidth: 6,
-                  backgroundColor: widget.T.border,
-                  valueColor: AlwaysStoppedAnimation(urgentColor),
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              ElevatedButton(
-                onPressed: _isVerifying ? null : _verifyOtp,
-                child: _isVerifying
-                    ? const CircularProgressIndicator()
-                    : const Text("Verify OTP"),
-              ),
-
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: _canResend ? _resendOtp : null,
-                child: Text(
-                  _canResend ? "Resend OTP" : "Resend in $_timerDisplay",
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              if (_isError)
+                // ─── Title ───
                 Text(
-                  _errorMsg,
+                  "Verify Phone",
                   style: TextStyle(
-                    color: widget.T.red,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: widget.T.text,
                   ),
                 ),
 
-              if (_isSuccess)
+                const SizedBox(height: 10),
+
+                // ─── Description ───
                 Text(
-                  "OTP Verified Successfully!",
+                  "Enter the 6-digit code sent to ${widget.phoneNumber}",
                   style: TextStyle(
-                    color: widget.T.green,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: widget.T.text.withOpacity(0.7),
                   ),
                 ),
-            ],
+
+                const SizedBox(height: 40),
+
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        _timerDisplay,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: urgentColor,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      SizedBox(
+                        width: 90,
+                        height: 90,
+                        child: CircularProgressIndicator(
+                          value: _timerProgress,
+                          strokeWidth: 6,
+                          backgroundColor: widget.T.border,
+                          valueColor: AlwaysStoppedAnimation(urgentColor),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      ElevatedButton(
+                        onPressed: _isVerifying ? null : _verifyOtp,
+                        child: _isVerifying
+                            ? const CircularProgressIndicator()
+                            : const Text("Verify OTP"),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      ElevatedButton(
+                        onPressed: _canResend ? _resendOtp : null,
+                        child: Text(
+                          _canResend
+                              ? "Resend OTP"
+                              : "Resend in $_timerDisplay",
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      if (_isError)
+                        Text(
+                          _errorMsg,
+                          style: TextStyle(
+                            color: widget.T.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                      if (_isSuccess)
+                        Text(
+                          "OTP Verified Successfully!",
+                          style: TextStyle(
+                            color: widget.T.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
