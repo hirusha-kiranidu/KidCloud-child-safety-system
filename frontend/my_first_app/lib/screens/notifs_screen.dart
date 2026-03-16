@@ -165,35 +165,37 @@ class _NotifsScreenState extends State<NotifsScreen> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: cats.map((c) {
-                return GestureDetector(
-                  onTap: () => setState(() => _filter = c),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 7),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _filter == c ? T.cyan : T.card2,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _filter == c ? T.cyan : T.border,
+              children: cats
+                  .map(
+                    (c) => GestureDetector(
+                      onTap: () => setState(() => _filter = c),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 7),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _filter == c ? T.cyan : T.card2,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _filter == c ? T.cyan : T.border,
+                          ),
+                        ),
+                        child: Text(
+                          c,
+                          style: TextStyle(
+                            color: _filter == c ? Colors.black : T.sub,
+                            fontSize: 12,
+                            fontWeight: _filter == c
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                          ),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      c,
-                      style: TextStyle(
-                        color: _filter == c ? Colors.black : T.sub,
-                        fontSize: 12,
-                        fontWeight: _filter == c
-                            ? FontWeight.w700
-                            : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+                  )
+                  .toList(),
             ),
           ),
 
@@ -295,6 +297,30 @@ class AlertHistoryScreen extends StatefulWidget {
 
 class _AlertHistoryScreenState extends State<AlertHistoryScreen> {
   String _filter = 'This Week';
+
+  final _history = const [
+    {
+      'date': 'Today',
+      'events': [
+        {
+          'icon': '🚨',
+          'title': 'SOS Alert — Emma',
+          'desc': 'Emma pressed SOS button near School zone',
+          'time': '5m ago',
+          'colorHex': 0xFFFF3E5E,
+          'resolved': false,
+        },
+        {
+          'icon': '📍',
+          'title': 'Geofence Exit — Leo',
+          'desc': 'Leo left the School safe zone boundary',
+          'time': '12m ago',
+          'colorHex': 0xFFFF7D3E,
+          'resolved': false,
+        },
+      ],
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
