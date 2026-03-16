@@ -53,5 +53,14 @@ def register(data: ParentRegister, db: Session = Depends(get_db)):
 def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
     """Verify OTP sent to parent's email.""" 
     parent = db.query(Parent).filter(Parent.email == data.email).first()
-if not parent:
-    raise HTTPException(status_code=404, detail="Parent not found")
+    if not parent:
+        raise HTTPException(status_code=404, detail="Parent not found")
+    otp = (
+        db.query(ParentOTP)
+        .filter(ParentOTP.parent_id == parent.id)
+        .order_by(ParentOTP.created_at.desc())
+        .first()
+    )
+
+    if not otp:
+        raise HTTPException(status_code=400, detail="OTP not found")
