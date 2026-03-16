@@ -135,7 +135,6 @@ class _NotifsScreenState extends State<NotifsScreen> {
                   ),
                 ],
               ),
-
               GestureDetector(
                 onTap: () => widget.go('alerthistory'),
                 child: Container(
@@ -159,6 +158,44 @@ class _NotifsScreenState extends State<NotifsScreen> {
                 ),
               ),
             ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Filter Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: cats.map((c) {
+                return GestureDetector(
+                  onTap: () => setState(() => _filter = c),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _filter == c ? T.cyan : T.card2,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _filter == c ? T.cyan : T.border,
+                      ),
+                    ),
+                    child: Text(
+                      c,
+                      style: TextStyle(
+                        color: _filter == c ? Colors.black : T.sub,
+                        fontSize: 12,
+                        fontWeight: _filter == c
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
