@@ -17,4 +17,5 @@ class Parent(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     phone_number = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
+    is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
