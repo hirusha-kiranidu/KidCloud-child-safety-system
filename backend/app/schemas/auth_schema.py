@@ -33,5 +33,9 @@ class ParentResponse(BaseModel):
     phone_number: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+
+class OTPVerifyRequest(BaseModel):
+    """Schema for OTP verification request."""
+
+    email: EmailStr
+    otp_code: str
