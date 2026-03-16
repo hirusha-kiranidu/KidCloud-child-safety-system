@@ -19,22 +19,28 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  // ── Controllers and FocusNodes for 6-digit OTP
+  // OTP Controllers
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
 
-  // ── Timer variables
-  static const int _totalSeconds = 300; // 5 minutes
+  // Timer variables
+  static const int _totalSeconds = 300;
   int _secondsLeft = _totalSeconds;
   bool _canResend = false;
   late Timer _timer;
 
+  // Error flag
+  bool _isError = false;
+  String _errorMsg = '';
+
   @override
   void initState() {
     super.initState();
+
     _controllers = List.generate(6, (_) => TextEditingController());
     _focusNodes = List.generate(6, (_) => FocusNode());
-    _startTimer(); // start countdown on init
+
+    _startTimer();
   }
 
   @override
@@ -45,34 +51,69 @@ class _OtpScreenState extends State<OtpScreen> {
     super.dispose();
   }
 
-  // ── Countdown timer logic
+  // Start countdown timer
   void _startTimer() {
     _secondsLeft = _totalSeconds;
     _canResend = false;
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
+
       if (_secondsLeft == 0) {
         timer.cancel();
-        setState(() => _canResend = true);
+        setState(() {
+          _canResend = true;
+        });
       } else {
-        setState(() => _secondsLeft--);
+        setState(() {
+          _secondsLeft--;
+        });
       }
     });
   }
 
-  // ── Timer display helper: mm:ss string
+  // Timer display helper
   String get _timerDisplay {
-    final minutes = _secondsLeft ~/ 60;
-    final seconds = _secondsLeft % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    final m = _secondsLeft ~/ 60;
+    final s = _secondsLeft % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  // ── Timer progress for CircularProgressIndicator
+  // Timer progress helper
   double get _timerProgress => _secondsLeft / _totalSeconds;
+
+  // ═══════════════════════════════
+  // RESEND OTP FUNCTION
+  // ═══════════════════════════════
+  void _resendOtp() {
+    if (!_canResend) return;
+
+    // Clear OTP boxes
+    for (final c in _controllers) {
+      c.clear();
+    }
+
+    // Focus first box
+    _focusNodes[0].requestFocus();
+
+    // Reset errors
+    setState(() {
+      _isError = false;
+      _errorMsg = '';
+    });
+
+    // Restart timer
+    _timer.cancel();
+    _startTimer();
+
+    // TODO: call backend resend API
+  }
 
   @override
   Widget build(BuildContext context) {
-    final urgentColor = _secondsLeft < 60 ? widget.T.red : widget.T.cyan;
+    final urgentColor = (_secondsLeft < 60 && !_canResend)
+        ? widget.T.red
+        : widget.T.cyan;
 
     return Scaffold(
       body: Center(
@@ -80,28 +121,30 @@ class _OtpScreenState extends State<OtpScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'OTP Screen Timer Helpers',
+              "OTP Timer",
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 color: widget.T.text,
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 20),
-            // ── Timer display
+
             Text(
               _timerDisplay,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
                 color: urgentColor,
-                fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 10),
-            // ── Timer progress ring example
+
+            const SizedBox(height: 20),
+
             SizedBox(
-              width: 80,
-              height: 80,
+              width: 90,
+              height: 90,
               child: CircularProgressIndicator(
                 value: _timerProgress,
                 strokeWidth: 6,
@@ -109,10 +152,14 @@ class _OtpScreenState extends State<OtpScreen> {
                 valueColor: AlwaysStoppedAnimation(urgentColor),
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              _canResend ? 'You can resend OTP' : 'Counting down...',
-              style: TextStyle(fontSize: 14, color: widget.T.sub),
+
+            const SizedBox(height: 30),
+
+            ElevatedButton(
+              onPressed: _canResend ? _resendOtp : null,
+              child: Text(
+                _canResend ? "Resend OTP" : "Resend in $_timerDisplay",
+              ),
             ),
           ],
         ),
