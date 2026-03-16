@@ -140,20 +140,15 @@ class _OtpScreenState extends State<OtpScreen>
 
   @override
   void dispose() {
-    // Dispose controllers
     for (final controller in _controllers) {
       controller.dispose();
     }
 
-    // Dispose focus nodes
     for (final node in _focusNodes) {
       node.dispose();
     }
 
-    // Cancel timer
     _timer.cancel();
-
-    // Dispose animation controller
     _shakeCtrl.dispose();
 
     super.dispose();
@@ -166,81 +161,95 @@ class _OtpScreenState extends State<OtpScreen>
         : widget.T.cyan;
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "OTP Verification",
-              style: TextStyle(
-                fontSize: 20,
-                color: widget.T.text,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
 
-            const SizedBox(height: 20),
+        // ── Gradient Background
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [widget.T.mint, widget.T.cyan],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
 
-            Text(
-              _timerDisplay,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: urgentColor,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: 90,
-              height: 90,
-              child: CircularProgressIndicator(
-                value: _timerProgress,
-                strokeWidth: 6,
-                backgroundColor: widget.T.border,
-                valueColor: AlwaysStoppedAnimation(urgentColor),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            ElevatedButton(
-              onPressed: _isVerifying ? null : _verifyOtp,
-              child: _isVerifying
-                  ? const CircularProgressIndicator()
-                  : const Text("Verify OTP"),
-            ),
-
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: _canResend ? _resendOtp : null,
-              child: Text(
-                _canResend ? "Resend OTP" : "Resend in $_timerDisplay",
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            if (_isError)
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               Text(
-                _errorMsg,
+                "OTP Verification",
                 style: TextStyle(
-                  color: widget.T.red,
+                  fontSize: 22,
+                  color: widget.T.text,
                   fontWeight: FontWeight.bold,
                 ),
               ),
 
-            if (_isSuccess)
+              const SizedBox(height: 20),
+
               Text(
-                "OTP Verified Successfully!",
+                _timerDisplay,
                 style: TextStyle(
-                  color: widget.T.green,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: urgentColor,
                 ),
               ),
-          ],
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: 90,
+                height: 90,
+                child: CircularProgressIndicator(
+                  value: _timerProgress,
+                  strokeWidth: 6,
+                  backgroundColor: widget.T.border,
+                  valueColor: AlwaysStoppedAnimation(urgentColor),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              ElevatedButton(
+                onPressed: _isVerifying ? null : _verifyOtp,
+                child: _isVerifying
+                    ? const CircularProgressIndicator()
+                    : const Text("Verify OTP"),
+              ),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: _canResend ? _resendOtp : null,
+                child: Text(
+                  _canResend ? "Resend OTP" : "Resend in $_timerDisplay",
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              if (_isError)
+                Text(
+                  _errorMsg,
+                  style: TextStyle(
+                    color: widget.T.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+              if (_isSuccess)
+                Text(
+                  "OTP Verified Successfully!",
+                  style: TextStyle(
+                    color: widget.T.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
