@@ -52,3 +52,6 @@ def register(data: ParentRegister, db: Session = Depends(get_db)):
 @router.post("/verify-otp")
 def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
     """Verify OTP sent to parent's email.""" 
+    parent = db.query(Parent).filter(Parent.email == data.email).first()
+if not parent:
+    raise HTTPException(status_code=404, detail="Parent not found")
