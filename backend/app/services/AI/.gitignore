@@ -1,0 +1,19 @@
+# Python virtual environments
+venv/
+env/
+ai_env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# large AI models
+*.pt
+*.h5
+*.pb
+
+# audio files
+*.wav
