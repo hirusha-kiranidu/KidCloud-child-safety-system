@@ -110,6 +110,9 @@ class _NotifsScreenState extends State<NotifsScreen> {
         ? _notifs.where((n) => n['urgent'] == true).toList()
         : _notifs.where((n) => n['child'] == _filter).toList();
 
-    return Container();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: []),
+    );
   }
 }
