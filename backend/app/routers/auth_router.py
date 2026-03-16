@@ -48,3 +48,7 @@ def register(data: ParentRegister, db: Session = Depends(get_db)):
     print(f"Generated OTP for {parent.email}: {otp_code}")
 
     return {"message": "Account created. OTP sent to your email."}
+
+@router.post("/verify-otp")
+def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
+    """Verify OTP sent to parent's email.""" 
