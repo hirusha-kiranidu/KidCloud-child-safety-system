@@ -44,83 +44,53 @@ class OnboardScreen extends StatelessWidget {
     final color = Color(data['color'] as int);
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(0, -0.5),
-          radius: 1,
-          colors: [color.withOpacity(0.1), T.bg],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-        child: Column(
-          children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () => go('login'),
-                child: Text(
-                  'Skip →',
-                  style: TextStyle(color: T.sub, fontSize: 13),
-                ),
-              ),
+      color: T.bg,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            data['icon'] as String,
+            style: const TextStyle(fontSize: 60),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            data['title'] as String,
+            style: TextStyle(
+              color: T.text,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
-
-            const Spacer(),
-
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(44),
-                border: Border.all(color: color.withOpacity(0.27), width: 2),
-                boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.13), blurRadius: 70)
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  data['icon'] as String,
-                  style: const TextStyle(fontSize: 66),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 34),
-
-            Text(
-              data['title'] as String,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: T.text,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                height: 1.25,
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            Text(
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Text(
               data['desc'] as String,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: T.sub,
-                fontSize: 14,
-                height: 1.75,
+              style: TextStyle(color: T.sub, fontSize: 14),
+            ),
+          ),
+
+          const SizedBox(height: 40),
+
+          // ✅ Animated Progress Dots
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              3,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: i == idx ? 28 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: i == idx ? color : T.muted,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ),
-
-            const Spacer(),
-
-            PrimaryBtn(
-              label: 'Next →',
-              onTap: () => go('onboard${idx + 1}'),
-              T: T,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
