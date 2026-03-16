@@ -7,13 +7,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.parent import Parent
-from app.schemas.auth_schema import ParentRegister, ParentResponse
+from app.schemas.auth_schema import ParentRegister
+from app.services.auth.otp_service import create_otp
 from app.services.auth.password_service import hash_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=ParentResponse)
+@router.post("/register")
 def register(data: ParentRegister, db: Session = Depends(get_db)):
     """Register a new parent."""
     # Check if email already exists
@@ -40,11 +41,8 @@ def register(data: ParentRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(parent)
 
-    # Return ParentResponse
-    return ParentResponse(
-        id=parent.id,
-        name=parent.name,
-        email=parent.email,
-        phone_number=parent.phone_number,
-        created_at=parent.created_at,
-    )
+    # Generate OTP
+    otp_code = create_otp(db, parent.id)
+    print(f"Generated OTP for {parent.email}: {otp_code}")
+
+    return {"message": "Account created. OTP sent to your email."}
