@@ -112,7 +112,56 @@ class _NotifsScreenState extends State<NotifsScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: []),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Notifications',
+                    style: TextStyle(
+                      color: T.text,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    '${_notifs.where((n) => n['urgent'] == true).length} urgent · Today',
+                    style: TextStyle(color: T.sub, fontSize: 11),
+                  ),
+                ],
+              ),
+
+              GestureDetector(
+                onTap: () => widget.go('alerthistory'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: T.blue.withOpacity(0.11),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: T.blue),
+                  ),
+                  child: Text(
+                    '📋 History',
+                    style: TextStyle(
+                      color: T.blue,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
