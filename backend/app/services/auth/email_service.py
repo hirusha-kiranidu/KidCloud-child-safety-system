@@ -6,6 +6,7 @@ Configure EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD in .env.
 
 import logging
 import os
+from email.mime.text import MIMEText
 
 
 from dotenv import load_dotenv
@@ -41,3 +42,13 @@ def send_otp_email(to_email: str, otp_code: str) -> bool:
             "[email_service] FAILURE: SMTP not configured (check .env variables)."
         )
         return False
+    
+
+    body = (
+        f"Your OTP code is: {otp_code}. It will expire in 5 minutes."
+    )
+
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["Subject"] = OTP_SUBJECT
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
