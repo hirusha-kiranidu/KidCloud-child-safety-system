@@ -75,5 +75,15 @@ def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
 
     parent.is_verified
     db.commit ()
-    return {"Message":"Email varified  succesfully"}
+
+    access_token = create_access_token(
+        {"id": parent.id, "email": parent.email}
+    )
+
+    return {
+        "message": "Email verified successfully",
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
     
