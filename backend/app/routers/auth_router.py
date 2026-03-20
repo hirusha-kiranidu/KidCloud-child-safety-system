@@ -72,7 +72,7 @@ def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalide OTP")
     
 
-    parent.is_varified
+    parent.is_verified
     db.commit ()
     return {"Message":"Email varified  succesfully"}
     
