@@ -6,8 +6,7 @@ Configure EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD in .env.
 
 import logging
 import os
-import smtplib
-from email.mime.text import MIMEText
+
 
 from dotenv import load_dotenv
 
