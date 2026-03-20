@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models.parent import Parent
 from app.models.parent_otp import ParentOTP
 from app.schemas.auth_schema import OTPVerifyRequest, ParentRegister
+from app.services.auth.jwt_service import create_access_token
 from app.services.auth.otp_service import create_otp
 from app.services.auth.password_service import hash_password
 
