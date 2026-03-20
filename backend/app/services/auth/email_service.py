@@ -21,3 +21,7 @@ EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 OTP_SUBJECT = "KidCloud OTP Verification"
+
+
+def _smtp_config_ready() -> bool:
+    return all([EMAIL_HOST, EMAIL_PORT_STR, EMAIL_USER, EMAIL_PASSWORD])
