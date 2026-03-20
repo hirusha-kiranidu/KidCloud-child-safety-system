@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,21 +14,17 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _fade;
-  late Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1000));
-    _fade  = Tween<double>(begin: 0, end: 1)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-    _scale = Tween<double>(begin: 0.8, end: 1.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
+        vsync: this, duration: const Duration(milliseconds: 900));
+    _fade = Tween<double>(begin: 0, end: 1).animate(_ctrl);
     _ctrl.forward();
-    Future.delayed(const Duration(milliseconds: 2800), () {
+    Future.delayed(const Duration(milliseconds: 10000), () {
       if (mounted) widget.go('onboard0');
-    });
+    });  
   }
 
   @override
@@ -41,84 +36,61 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
-    final nunitoFont = GoogleFonts.nunito().fontFamily;
-
     return FadeTransition(
       opacity: _fade,
       child: Container(
-        // ── KidCloud gradient background ──────────────
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [T.bgTop, T.bgBottom],
+          gradient: RadialGradient(
+            center: const Alignment(0, -0.3),
+            radius: 0.9,
+            colors: [const Color(0xFF0A2448), T.bg],
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ScaleTransition(
-              scale: _scale,
-              child: Container(
-                width: 100, height: 100,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      colors: [T.cyan, T.blue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight),
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                        color: T.cyan.withOpacity(0.4),
-                        blurRadius: 50,
-                        offset: const Offset(0, 10))
-                  ],
-                ),
-                child: const Center(
-                    child: Text('☁️', style: TextStyle(fontSize: 50))),
-              ),
+            // ── Logo ──────────────────────────────────────
+            Image.asset(
+              'assets/images/logo.png',
+              width: 150,
+              height: 150,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 24),
-            // ── Brand name ─────────────────────────────
+            const SizedBox(height: 22),
             RichText(
               text: TextSpan(
-                style: TextStyle(
-                    fontSize: 38,
+                style: const TextStyle(
+                    fontSize: 34,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -1,
-                    fontFamily: nunitoFont),
+                    letterSpacing: -1),
                 children: [
-                  TextSpan(text: 'Kid',
-                      style: TextStyle(color: T.text)),
-                  TextSpan(text: 'Cloud',
-                      style: TextStyle(color: T.cyan)),
+                  TextSpan(
+                      text: 'Kid', style: TextStyle(color: T.text)),
+                  TextSpan(
+                      text: 'Cloud', style: TextStyle(color: T.cyan)),
                 ],
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              'Smart Child Safety System',
-              style: TextStyle(
-                  color: T.sub,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.8,
-                  fontFamily: nunitoFont),
-            ),
-            const SizedBox(height: 64),
-            // ── Loading dots ───────────────────────────
+            Text('Carry Their Safety, Everywhere',
+                style: TextStyle(
+                    color: T.sub, fontSize: 13, letterSpacing: 0.5)),
+            const SizedBox(height: 60),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 400),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width:  i == 0 ? 28 : 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: i == 0 ? T.cyan : T.border,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              )),
+              children: List.generate(
+                  3,
+                  (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin:
+                            const EdgeInsets.symmetric(horizontal: 3.5),
+                        width: i == 0 ? 26 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: i == 0 ? T.cyan : T.muted,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      )),
             ),
           ],
         ),
