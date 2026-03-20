@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models.parent import Parent
 from app.models.parent_otp import ParentOTP
 from app.schemas.auth_schema import OTPVerifyRequest, ParentRegister
+from app.services.auth.email_service import send_otp_email
 from app.services.auth.jwt_service import create_access_token
 from app.services.auth.otp_service import create_otp
 from app.services.auth.password_service import hash_password
@@ -46,7 +47,7 @@ def register(data: ParentRegister, db: Session = Depends(get_db)):
 
     # Generate OTP
     otp_code = create_otp(db, parent.id)
-    print(f"Generated OTP for {parent.email}: {otp_code}")
+    send_otp_email(parent.email, otp_code)
 
     return {"message": "Account created. OTP sent to your email."}
 
