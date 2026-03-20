@@ -8,3 +8,6 @@ def read_root():
     return {"message": "KidCloud Backend is running"}
 
 app.include_router(auth_router)
+
+from dotenv import load_dotenv
+load_dotenv
