@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 
-// ── Signup Screen ─────────────────────────────────────────
+// ── Signup Screen ──────────────────────────────────────
 class SignupScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -15,13 +14,25 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   int _step = 1;
-  final _name = TextEditingController();
+  final _firstName = TextEditingController();
+  final _lastName = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _pass = TextEditingController();
   final _confirm = TextEditingController();
   bool _agreed = false;
-  bool _showPass = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _firstName.dispose();
+    _lastName.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _pass.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
 
   Color get _strengthColor {
     final l = _pass.text.length;
@@ -32,261 +43,317 @@ class _SignupScreenState extends State<SignupScreen> {
 
   String get _strengthLabel {
     final l = _pass.text.length;
-    if (l >= 8) return 'Strong ✓';
+    if (l >= 8) return 'Strong';
     if (l >= 4) return 'Medium';
     return 'Weak';
+  }
+
+  void _goToStep2() {
+    if (_firstName.text.trim().isEmpty || _lastName.text.trim().isEmpty) {
+      setState(() => _error = 'Please enter your first and last name');
+      return;
+    }
+    if (_email.text.trim().isEmpty || _phone.text.trim().isEmpty) {
+      setState(() => _error = 'Please fill in all fields');
+      return;
+    }
+    setState(() {
+      _error = null;
+      _step = 2;
+    });
+  }
+
+  void _submitSignup() {
+    if (_pass.text != _confirm.text) {
+      setState(() => _error = 'Passwords do not match');
+      return;
+    }
+    if (!_agreed) {
+      setState(() => _error = 'Please accept the Terms of Service');
+      return;
+    }
+    if (_pass.text.length < 6) {
+      setState(() => _error = 'Password must be at least 6 characters');
+      return;
+    }
+    setState(() => _error = null);
+    // Demo mode: skip API, go to OTP
+    // TODO: Replace with ApiService.signup() then navigate to otp
+    widget.go('otp');
   }
 
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
-    final font = GoogleFonts.nunito().fontFamily;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [T.bgTop, T.bgBottom],
-        ),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Top bar ─────────────────────────────
-            KCTopBar(
-              title: 'Create Account',
-              sub: 'Step $_step of 2',
-              onBack: () =>
-                  _step == 1 ? widget.go('welcome') : setState(() => _step = 1),
-              T: T,
-            ),
-            // Progress bar
-            Container(
-              height: 6,
-              decoration: BoxDecoration(
-                color: T.border,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: FractionallySizedBox(
-                widthFactor: _step / 2,
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [T.cyan, T.blue]),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Logo ──────────────────────────────────────
+          Center(
+            child: Column(
+              children: [
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
                 ),
-              ),
-            ),
-            const SizedBox(height: 22),
-
-            if (_step == 1) ...[
-              _SectionLabel('Personal Info', T, font),
-              KCInput(
-                label: 'Full Name',
-                placeholder: 'Alex Johnson',
-                icon: '👤',
-                controller: _name,
-                T: T,
-              ),
-              KCInput(
-                label: 'Email Address',
-                placeholder: 'you@email.com',
-                icon: '✉️',
-                controller: _email,
-                T: T,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              KCInput(
-                label: 'Phone Number',
-                placeholder: '+60 1X XXX XXXX',
-                icon: '📱',
-                controller: _phone,
-                T: T,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 6),
-              PrimaryBtn(
-                label: 'Continue  →',
-                onTap: () => setState(() => _step = 2),
-                T: T,
-              ),
-            ] else ...[
-              _SectionLabel('Set Password', T, font),
-              KCInput(
-                label: 'Password',
-                placeholder: 'Min 8 characters',
-                icon: '🔒',
-                controller: _pass,
-                T: T,
-                obscure: !_showPass,
-              ),
-              KCInput(
-                label: 'Confirm Password',
-                placeholder: 'Re-enter password',
-                icon: '🔐',
-                controller: _confirm,
-                T: T,
-                obscure: !_showPass,
-              ),
-              // Strength bar
-              ValueListenableBuilder(
-                valueListenable: _pass,
-                builder: (_, __, ___) => Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: T.border),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Password strength',
-                            style: TextStyle(
-                              color: T.sub,
-                              fontSize: 13,
-                              fontFamily: font,
-                            ),
-                          ),
-                          Text(
-                            _strengthLabel,
-                            style: TextStyle(
-                              color: _strengthColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: font,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: T.border,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: FractionallySizedBox(
-                          widthFactor: (_pass.text.length / 10).clamp(0, 1),
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _strengthColor,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Terms
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: () => setState(() => _agreed = !_agreed),
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: _agreed
-                            ? T.cyan.withOpacity(0.15)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: T.cyan, width: 2),
-                      ),
-                      child: _agreed
-                          ? Icon(Icons.check, size: 13, color: T.cyan)
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          color: T.sub,
-                          fontSize: 13,
-                          height: 1.6,
-                          fontFamily: font,
-                        ),
-                        children: [
-                          const TextSpan(text: 'I agree to the '),
-                          TextSpan(
-                            text: 'Terms of Service',
-                            style: TextStyle(
-                              color: T.cyan,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'Privacy Policy',
-                            style: TextStyle(
-                              color: T.cyan,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // ── Create Account → OTP ──────────────
-              PrimaryBtn(
-                label: 'Create Account  🎉',
-                onTap: () => widget.go('otp'),
-                T: T,
-              ),
-            ],
-            const SizedBox(height: 18),
-            Center(
-              child: GestureDetector(
-                onTap: () => widget.go('login'),
-                child: RichText(
+                const SizedBox(height: 8),
+                RichText(
                   text: TextSpan(
-                    style: TextStyle(
-                      color: T.sub,
-                      fontSize: 14,
-                      fontFamily: font,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
                     ),
                     children: [
-                      const TextSpan(text: 'Already have an account?  '),
                       TextSpan(
-                        text: 'Sign In',
-                        style: TextStyle(
-                          color: T.cyan,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        text: 'Kid',
+                        style: TextStyle(color: T.text),
+                      ),
+                      TextSpan(
+                        text: 'Cloud',
+                        style: TextStyle(color: T.cyan),
                       ),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          KCTopBar(
+            title: 'Create Account',
+            sub: 'Step $_step of 2',
+            onBack: () =>
+                _step == 1 ? widget.go('welcome') : setState(() => _step = 1),
+            T: T,
+          ),
+
+          // Progress bar
+          Container(
+            height: 5,
+            decoration: BoxDecoration(
+              color: T.card2,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: FractionallySizedBox(
+              widthFactor: _step / 2,
+              alignment: Alignment.centerLeft,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [T.cyan, T.orange]),
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: 20),
+
+          // Error banner
+          if (_error != null) ...[
+            _ErrorBanner(message: _error!, T: T),
+            const SizedBox(height: 12),
           ],
-        ),
+
+          if (_step == 1) ...[
+            // First Name + Last Name side by side
+            Row(
+              children: [
+                Expanded(
+                  child: KCInput(
+                    label: 'First Name *',
+                    placeholder: 'e.g. Sarah',
+                    icon: '👤',
+                    controller: _firstName,
+                    T: T,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: KCInput(
+                    label: 'Last Name *',
+                    placeholder: 'e.g. Johnson',
+                    icon: '👤',
+                    controller: _lastName,
+                    T: T,
+                  ),
+                ),
+              ],
+            ),
+            KCInput(
+              label: 'Email Address *',
+              placeholder: 'you@email.com',
+              icon: '✉️',
+              controller: _email,
+              T: T,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            KCInput(
+              label: 'Phone Number *',
+              placeholder: '+94 7X XXX XXXX',
+              icon: '📱',
+              controller: _phone,
+              T: T,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 8),
+            PrimaryBtn(label: 'Continue →', onTap: _goToStep2, T: T),
+          ] else ...[
+            KCInput(
+              label: 'Password',
+              placeholder: 'Min 8 characters',
+              icon: '🔒',
+              controller: _pass,
+              T: T,
+              obscure: true,
+            ),
+            KCInput(
+              label: 'Confirm Password',
+              placeholder: 'Re-enter password',
+              icon: '🔐',
+              controller: _confirm,
+              T: T,
+              obscure: true,
+            ),
+            // Password strength meter
+            ValueListenableBuilder(
+              valueListenable: _pass,
+              builder: (_, __, ___) => Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: T.card2,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: T.border),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Password strength',
+                          style: TextStyle(color: T.sub, fontSize: 11),
+                        ),
+                        Text(
+                          _strengthLabel,
+                          style: TextStyle(
+                            color: _strengthColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: T.card,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: FractionallySizedBox(
+                        widthFactor: (_pass.text.length / 10)
+                            .clamp(0, 1)
+                            .toDouble(),
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _strengthColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Terms checkbox
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => setState(() => _agreed = !_agreed),
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: _agreed
+                          ? T.cyan.withOpacity(0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: T.cyan, width: 1.5),
+                    ),
+                    child: _agreed
+                        ? Icon(Icons.check, size: 12, color: T.cyan)
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        color: T.sub,
+                        fontSize: 11,
+                        height: 1.65,
+                      ),
+                      children: [
+                        const TextSpan(text: 'I agree to the '),
+                        TextSpan(
+                          text: 'Terms of Service',
+                          style: TextStyle(color: T.cyan),
+                        ),
+                        const TextSpan(text: ' and '),
+                        TextSpan(
+                          text: 'Privacy Policy',
+                          style: TextStyle(color: T.cyan),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            PrimaryBtn(label: 'Create Account →', onTap: _submitSignup, T: T),
+          ],
+
+          const SizedBox(height: 20),
+          Center(
+            child: GestureDetector(
+              onTap: () => widget.go('login'),
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(color: T.sub, fontSize: 12),
+                  children: [
+                    const TextSpan(text: 'Already have an account? '),
+                    TextSpan(
+                      text: 'Sign In',
+                      style: TextStyle(
+                        color: T.cyan,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Login Screen ──────────────────────────────────────────
+// ── Login Screen ───────────────────────────────────────
 class LoginScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -297,276 +364,164 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _obscurePass = true;
+  final _email = TextEditingController();
+  final _pass = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _pass.dispose();
+    super.dispose();
+  }
+
+  void _submitLogin() {
+    if (_email.text.trim().isEmpty || _pass.text.isEmpty) {
+      setState(() => _error = 'Please enter your email and password');
+      return;
+    }
+    setState(() => _error = null);
+    // Demo mode: skip API, go to OTP
+    // TODO: Replace with ApiService.login() then navigate to otp
+    widget.go('otp');
+  }
 
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
-    final font = GoogleFonts.nunito().fontFamily;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
 
-    return Container(
-      // ── KidCloud gradient background ───────────────
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [T.bgTop, T.bgBottom],
-        ),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        child: Column(
-          children: [
-            KCTopBar(
-              title: 'Welcome Back 👋',
-              sub: 'Sign in to KidCloud',
-              onBack: () => widget.go('welcome'),
-              T: T,
+          // ── Logo ──────────────────────────────────────
+          Image.asset(
+            'assets/images/logo.png',
+            width: 110,
+            height: 110,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Welcome Back',
+            style: TextStyle(
+              color: T.text,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 10),
+          ),
+          Text(
+            'Sign in to your account',
+            style: TextStyle(color: T.sub, fontSize: 13),
+          ),
+          const SizedBox(height: 28),
 
-            // ── Logo ──────────────────────────────────
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [T.cyan, T.blue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(26),
-                boxShadow: [
-                  BoxShadow(
-                    color: T.cyan.withOpacity(0.35),
-                    blurRadius: 28,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text('☁️', style: TextStyle(fontSize: 40)),
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            Text(
-              'KidCloud',
-              style: TextStyle(
-                color: T.text,
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-                fontFamily: font,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Fund your child\'s safety everywhere',
-              style: TextStyle(
-                color: T.sub,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                fontFamily: font,
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // ── Form card ─────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.75),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: T.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: T.cyan.withOpacity(0.12),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  KCInput(
-                    label: 'Email or Phone',
-                    placeholder: 'you@email.com',
-                    icon: '✉️',
-                    T: T,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  KCInput(
-                    label: 'Password',
-                    placeholder: 'Your password',
-                    icon: '🔒',
-                    T: T,
-                    obscure: _obscurePass,
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: T.cyan,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: font,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // ── Login → OTP ───────────────────────────
-            PrimaryBtn(
-              label: 'Sign In  →',
-              onTap: () => widget.go('otp'),
-              T: T,
-            ),
-            const SizedBox(height: 20),
-
-            // ── Divider ───────────────────────────────
-            Row(
-              children: [
-                Expanded(child: Divider(color: T.border)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'OR',
-                    style: TextStyle(
-                      color: T.sub,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: font,
-                    ),
-                  ),
-                ),
-                Expanded(child: Divider(color: T.border)),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // ── Social buttons ────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: _SocialBtn(
-                    icon: '🔵',
-                    label: 'Google',
-                    onTap: () => widget.go('otp'),
-                    T: T,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _SocialBtn(
-                    icon: '🍎',
-                    label: 'Apple',
-                    onTap: () => widget.go('otp'),
-                    T: T,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _SocialBtn(
-                    icon: '🔷',
-                    label: 'Facebook',
-                    onTap: () => widget.go('otp'),
-                    T: T,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-
-            GestureDetector(
-              onTap: () => widget.go('signup'),
-              child: RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    color: T.sub,
-                    fontSize: 14,
-                    fontFamily: font,
-                  ),
-                  children: [
-                    const TextSpan(text: 'Need an account?  '),
-                    TextSpan(
-                      text: 'Sign up here',
-                      style: TextStyle(
-                        color: T.cyan,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          if (_error != null) ...[
+            _ErrorBanner(message: _error!, T: T),
+            const SizedBox(height: 12),
           ],
-        ),
+
+          KCInput(
+            label: 'Email Address',
+            placeholder: 'you@email.com',
+            icon: '✉️',
+            controller: _email,
+            T: T,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          KCInput(
+            label: 'Password',
+            placeholder: 'Your password',
+            icon: '🔒',
+            controller: _pass,
+            T: T,
+            obscure: true,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'Forgot Password?',
+              style: TextStyle(color: T.cyan, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 20),
+          PrimaryBtn(label: 'Sign In →', onTap: _submitLogin, T: T),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: Divider(color: T.border)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text('OR', style: TextStyle(color: T.sub, fontSize: 11)),
+              ),
+              Expanded(child: Divider(color: T.border)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Google login goes directly to dashboard (OAuth requires native plugin)
+          PrimaryBtn(
+            label: '🔵  Continue with Google',
+            onTap: () => widget.go('dashboard'),
+            T: T,
+            ghost: true,
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => widget.go('signup'),
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(color: T.sub, fontSize: 12),
+                children: [
+                  const TextSpan(text: 'No account? '),
+                  TextSpan(
+                    text: 'Create one free',
+                    style: TextStyle(
+                      color: T.cyan,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Social Button ─────────────────────────────────────────
-class _SocialBtn extends StatelessWidget {
-  final String icon;
-  final String label;
-  final VoidCallback onTap;
+// ── Error banner ───────────────────────────────────────
+class _ErrorBanner extends StatelessWidget {
+  final String message;
   final AppTheme T;
-  const _SocialBtn({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.T,
-  });
+  const _ErrorBanner({required this.message, required this.T});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: T.border, width: 1.5),
-        ),
-        child: Column(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 3),
-            Text(
-              label,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: T.red.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: T.red.withOpacity(0.35)),
+      ),
+      child: Row(
+        children: [
+          const Text('⚠️', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
               style: TextStyle(
-                color: T.sub,
-                fontSize: 11,
+                color: T.red,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
-                fontFamily: GoogleFonts.nunito().fontFamily,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-}
-
-// ── Section Label ─────────────────────────────────────────
-Widget _SectionLabel(String text, AppTheme T, String? font) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Text(
-      text,
-      style: TextStyle(
-        color: T.text,
-        fontSize: 16,
-        fontWeight: FontWeight.w800,
-        fontFamily: font,
-      ),
-    ),
-  );
 }
