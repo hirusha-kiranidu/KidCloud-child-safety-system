@@ -25,3 +25,20 @@ OTP_SUBJECT = "KidCloud OTP Verification"
 
 def _smtp_config_ready() -> bool:
     return all([EMAIL_HOST, EMAIL_PORT_STR, EMAIL_USER, EMAIL_PASSWORD])
+
+
+def send_otp_email(to_email: str, otp_code: str) -> bool:
+    """
+    Send OTP verification email via SMTP with STARTTLS.
+
+    Returns True if the message was accepted by the server, False otherwise.
+    """
+    if not _smtp_config_ready():
+        logger.error(
+            "Email not sent: missing EMAIL_HOST, EMAIL_PORT, EMAIL_USER, or "
+            "EMAIL_PASSWORD in environment."
+        )
+        print(
+            "[email_service] FAILURE: SMTP not configured (check .env variables)."
+        )
+        return False
