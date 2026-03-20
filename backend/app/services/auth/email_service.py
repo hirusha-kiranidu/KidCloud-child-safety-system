@@ -7,6 +7,7 @@ Configure EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD in .env.
 import logging
 import os
 from email.mime.text import MIMEText
+import smtplib
 
 
 from dotenv import load_dotenv
@@ -43,6 +44,12 @@ def send_otp_email(to_email: str, otp_code: str) -> bool:
         )
         return False
     
+    try:
+        port = int(EMAIL_PORT_STR)
+    except ValueError:
+        logger.error("EMAIL_PORT must be an integer, got: %s", EMAIL_PORT_STR)
+        print(f"[email_service] FAILURE: invalid EMAIL_PORT={EMAIL_PORT_STR!r}")
+        return False
 
     body = (
         f"Your OTP code is: {otp_code}. It will expire in 5 minutes."
@@ -52,3 +59,30 @@ def send_otp_email(to_email: str, otp_code: str) -> bool:
     msg["Subject"] = OTP_SUBJECT
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP(EMAIL_HOST, port, timeout=30) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASSWORD)
+            server.send_message(msg)
+
+        logger.info("OTP email sent successfully to %s", to_email)
+        print(f"[email_service] SUCCESS: OTP email sent to {to_email}")
+        return True
+
+    except smtplib.SMTPAuthenticationError as e:
+        logger.exception("SMTP authentication failed: %s", e)
+        print("[email_service] FAILURE: SMTP authentication failed.")
+        return False
+    except smtplib.SMTPException as e:
+        logger.exception("SMTP error while sending OTP email: %s", e)
+        print(f"[email_service] FAILURE: SMTP error: {e}")
+        return False
+    except OSError as e:
+        logger.exception("Network error while sending OTP email: %s", e)
+        print(f"[email_service] FAILURE: network error: {e}")
+        return False
+    except Exception as e:
+        logger.exception("Unexpected error while sending OTP email: %s", e)
+        print(f"[email_service] FAILURE: unexpected error: {e}")
+        return False
