@@ -26,7 +26,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _flash = false;
   bool _emergency = false;
   int? _selectedChildId;
-
   late Timer _timer;
 
   @override
@@ -371,16 +370,39 @@ class _EmergencyAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final childName = children.isNotEmpty ? children.first.name : 'Your Child';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: emergency ? T.red.withOpacity(0.1) : T.green.withOpacity(0.1),
+        color: emergency
+            ? (flash ? T.red.withOpacity(0.2) : T.red.withOpacity(0.1))
+            : T.green.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: emergency ? T.red : T.green,
+          width: emergency ? 2 : 1,
+        ),
+        boxShadow: emergency && flash
+            ? [
+                BoxShadow(
+                  color: T.red.withOpacity(0.4),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ]
+            : [],
       ),
       child: Row(
         children: [
-          Text(emergency ? '🆘 SOS Alert' : '🛡️ All Safe'),
-          const Spacer(),
+          Text(emergency ? '🆘' : '🛡️'),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              emergency ? '$childName pressed SOS' : 'All Safe',
+              style: TextStyle(color: emergency ? T.red : T.green),
+            ),
+          ),
           GestureDetector(
             onTap: onTest,
             child: Text(emergency ? 'ALERT' : 'SAFE'),
