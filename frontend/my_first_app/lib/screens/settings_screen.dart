@@ -128,7 +128,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 20),
 
           _SectionHeader('Appearance', T: T),
-
           _SettingsGroup(
             T: T,
             children: [
@@ -144,7 +143,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
 
           _SectionHeader('Sound & Vibration', T: T),
-
           _SettingsGroup(
             T: T,
             children: [
@@ -164,6 +162,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 on: _vibrate,
                 onToggle: () => setState(() => _vibrate = !_vibrate),
                 T: T,
+              ),
+            ],
+          ),
+
+          _SectionHeader('Account', T: T),
+          _SettingsGroup(
+            T: T,
+            children: [
+              _NavRow(
+                icon: '👤',
+                title: 'Edit Profile',
+                sub: 'Update your name, email & phone',
+                onTap: () => _showEditProfile(context, T),
+                T: T,
+              ),
+              _Divider(T: T),
+              _NavRow(
+                icon: '🔑',
+                title: 'Change Password',
+                sub: 'Update your password',
+                onTap: () => _showChangePassword(context, T),
+                T: T,
+              ),
+              _Divider(T: T),
+              _NavRow(
+                icon: '🗑️',
+                title: 'Delete Account',
+                sub: 'Permanently remove your account',
+                onTap: () => _confirmDelete(context, T),
+                T: T,
+                danger: true,
               ),
             ],
           ),
@@ -193,80 +222,131 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: T.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
             const SizedBox(height: 16),
-
-            Text(
-              'Edit Profile',
-              style: TextStyle(
-                color: T.text,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            KCInput(
-              label: 'Full Name',
-              placeholder: 'Your name',
-              icon: '👤',
-              controller: nameCtrl,
-              T: T,
-            ),
-
+            KCInput(label: 'Full Name', icon: '👤', controller: nameCtrl, T: T),
             KCInput(
               label: 'Email Address',
-              placeholder: 'you@email.com',
               icon: '✉️',
               controller: emailCtrl,
               T: T,
-              keyboardType: TextInputType.emailAddress,
             ),
-
             KCInput(
               label: 'Phone Number',
-              placeholder: '+94 7X XXX XXXX',
               icon: '📱',
               controller: phoneCtrl,
               T: T,
-              keyboardType: TextInputType.phone,
             ),
-
             PrimaryBtn(
               label: '💾 Save Changes',
               T: T,
               onTap: () {
                 setState(() {
-                  _displayName = nameCtrl.text.trim().isEmpty
-                      ? _displayName
-                      : nameCtrl.text.trim();
-                  _displayEmail = emailCtrl.text.trim().isEmpty
-                      ? _displayEmail
-                      : emailCtrl.text.trim();
-                  _displayPhone = phoneCtrl.text.trim().isEmpty
-                      ? _displayPhone
-                      : phoneCtrl.text.trim();
+                  _displayName = nameCtrl.text;
+                  _displayEmail = emailCtrl.text;
+                  _displayPhone = phoneCtrl.text;
                 });
                 Navigator.pop(ctx);
               },
             ),
-
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showChangePassword(BuildContext ctx, AppTheme T) {
+    final currentCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    String? error;
+
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: T.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx2, setSt) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (error != null) Text(error!, style: TextStyle(color: T.red)),
+
+              KCInput(
+                label: 'Current Password',
+                icon: '🔒',
+                controller: currentCtrl,
+                T: T,
+                obscure: true,
+              ),
+              KCInput(
+                label: 'New Password',
+                icon: '🔑',
+                controller: newCtrl,
+                T: T,
+                obscure: true,
+              ),
+              KCInput(
+                label: 'Confirm New',
+                icon: '🔐',
+                controller: confirmCtrl,
+                T: T,
+                obscure: true,
+              ),
+
+              PrimaryBtn(
+                label: '🔑 Update Password',
+                T: T,
+                onTap: () {
+                  if (newCtrl.text != confirmCtrl.text) {
+                    setSt(() => error = 'Passwords do not match');
+                    return;
+                  }
+                  Navigator.pop(ctx);
+                },
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext ctx, AppTheme T) {
+    showDialog(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        backgroundColor: T.card,
+        title: Text('Delete Account?', style: TextStyle(color: T.text)),
+        content: Text(
+          'This action cannot be undone.',
+          style: TextStyle(color: T.sub),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.onLogout();
+            },
+            child: Text('Delete', style: TextStyle(color: T.red)),
+          ),
+        ],
       ),
     );
   }
@@ -279,20 +359,13 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader(this.title, {required this.T});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: T.sub,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      title.toUpperCase(),
+      style: TextStyle(color: T.sub, fontSize: 10, fontWeight: FontWeight.w700),
+    ),
+  );
 }
 
 class _SettingsGroup extends StatelessWidget {
@@ -302,17 +375,15 @@ class _SettingsGroup extends StatelessWidget {
   const _SettingsGroup({required this.children, required this.T});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: T.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: T.border),
-      ),
-      child: Column(children: children),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 14),
+    decoration: BoxDecoration(
+      color: T.card,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: T.border),
+    ),
+    child: Column(children: children),
+  );
 }
 
 class _ToggleRow extends StatelessWidget {
@@ -331,44 +402,83 @@ class _ToggleRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    child: Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: T.cyan.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(child: Text(icon)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: TextStyle(color: T.text)),
+              Text(sub, style: TextStyle(color: T.sub, fontSize: 11)),
+            ],
+          ),
+        ),
+        KCToggle(on: on, onToggle: onToggle, T: T),
+      ],
+    ),
+  );
+}
+
+class _NavRow extends StatelessWidget {
+  final String icon, title, sub;
+  final VoidCallback onTap;
+  final AppTheme T;
+  final bool danger;
+
+  const _NavRow({
+    required this.icon,
+    required this.title,
+    required this.sub,
+    required this.onTap,
+    required this.T,
+    this.danger = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       child: Row(
         children: [
           Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: T.cyan.withOpacity(0.07),
+              color: danger
+                  ? T.red.withOpacity(0.07)
+                  : T.cyan.withOpacity(0.07),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Center(
-              child: Text(icon, style: const TextStyle(fontSize: 18)),
-            ),
+            child: Center(child: Text(icon)),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: T.text,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(title, style: TextStyle(color: danger ? T.red : T.text)),
                 Text(sub, style: TextStyle(color: T.sub, fontSize: 11)),
               ],
             ),
           ),
-          KCToggle(on: on, onToggle: onToggle, T: T),
+          Icon(Icons.chevron_right_rounded, color: T.sub),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _Divider extends StatelessWidget {
@@ -377,7 +487,6 @@ class _Divider extends StatelessWidget {
   const _Divider({required this.T});
 
   @override
-  Widget build(BuildContext context) {
-    return Divider(height: 1, color: T.border, indent: 14, endIndent: 14);
-  }
+  Widget build(BuildContext context) =>
+      Divider(height: 1, color: T.border, indent: 14, endIndent: 14);
 }
