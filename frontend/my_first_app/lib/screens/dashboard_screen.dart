@@ -87,10 +87,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: widget.children,
             selectedChildId: _selectedChildId,
             onSelectChild: (id) => setState(() => _selectedChildId = id),
-            onDismiss: () => setState(() => _emergency = false), // NEW
+            onDismiss: () => setState(() => _emergency = false),
             onTest: () => setState(() => _emergency = !_emergency),
             T: T,
           ),
+
+          const SizedBox(height: 12),
+
+          // ── Voice Detection Card (NEW - Commit 5) ──
+          _VoiceDetectionCard(T: T),
 
           const SizedBox(height: 20),
 
@@ -120,7 +125,7 @@ class _EmergencyAlertCard extends StatelessWidget {
   final List<ChildModel> children;
   final int? selectedChildId;
   final Function(int) onSelectChild;
-  final VoidCallback onDismiss; // NEW
+  final VoidCallback onDismiss;
   final VoidCallback onTest;
   final AppTheme T;
 
@@ -146,7 +151,6 @@ class _EmergencyAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final T = this.T;
     final child = _selected;
     final childName = child?.name ?? 'Your Child';
 
@@ -160,20 +164,11 @@ class _EmergencyAlertCard extends StatelessWidget {
           color: emergency ? (flash ? T.red : T.red.withOpacity(0.5)) : T.green,
           width: emergency ? 2 : 1.5,
         ),
-        boxShadow: emergency && flash
-            ? [
-                BoxShadow(
-                  color: T.red.withOpacity(0.25),
-                  blurRadius: 18,
-                  spreadRadius: 2,
-                ),
-              ]
-            : [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ─────────────────────────────
+          // Header
           Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -187,10 +182,6 @@ class _EmergencyAlertCard extends StatelessWidget {
                     color: emergency
                         ? (flash ? T.red : T.red.withOpacity(0.3))
                         : T.green.withOpacity(0.15),
-                    border: Border.all(
-                      color: emergency ? T.red : T.green,
-                      width: 2,
-                    ),
                   ),
                   child: Center(
                     child: Text(
@@ -208,7 +199,6 @@ class _EmergencyAlertCard extends StatelessWidget {
                         emergency ? 'SOS Alert' : 'All Safe',
                         style: TextStyle(
                           color: emergency ? T.red : T.green,
-                          fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -251,7 +241,7 @@ class _EmergencyAlertCard extends StatelessWidget {
             ),
           ),
 
-          // ── Child Selector ─────────────────────
+          // Child selector
           if (children.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
@@ -276,27 +266,14 @@ class _EmergencyAlertCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected ? color : T.border,
-                            width: isSelected ? 1.5 : 1,
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Text(
-                              ch.avatar,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              ch.name,
-                              style: TextStyle(
-                                color: isSelected ? color : T.sub,
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          ch.name,
+                          style: TextStyle(
+                            color: isSelected ? color : T.sub,
+                            fontSize: 11,
+                          ),
                         ),
                       ),
                     );
@@ -305,39 +282,26 @@ class _EmergencyAlertCard extends StatelessWidget {
               ),
             ),
 
-          // ── Emergency Actions (NEW - Commit 4) ──
+          // Actions
           if (emergency)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              padding: const EdgeInsets.all(14),
               child: Row(
                 children: [
                   Expanded(
                     child: GestureDetector(
                       onTap: onDismiss,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: T.red,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Mark as Resolved',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
+                        child: const Center(
+                          child: Text(
+                            'Mark as Resolved',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
                     ),
@@ -345,32 +309,83 @@ class _EmergencyAlertCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: T.red.withOpacity(0.12),
+                        border: Border.all(color: T.red),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: T.red.withOpacity(0.4)),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.phone, color: T.red, size: 16),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Call 119',
-                            style: TextStyle(
-                              color: T.red,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+                      child: Center(
+                        child: Text('Call 119', style: TextStyle(color: T.red)),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoiceDetectionCard extends StatelessWidget {
+  final AppTheme T;
+
+  const _VoiceDetectionCard({required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: T.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: T.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: T.cyan.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Text('🎙️', style: TextStyle(fontSize: 22)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Voice Detection',
+                  style: TextStyle(color: T.text, fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  'Wristband mic monitors for distress keywords',
+                  style: TextStyle(color: T.sub, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: T.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Active',
+              style: TextStyle(
+                color: T.green,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );
