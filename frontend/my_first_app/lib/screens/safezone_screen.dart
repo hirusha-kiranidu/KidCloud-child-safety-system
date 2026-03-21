@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../models.dart';
 
 class SafeZoneScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
+  final List<ChildModel> children;
 
   const SafeZoneScreen({
     super.key,
     required this.go,
     required this.T,
+    required this.children,
   });
 
   @override
@@ -17,9 +20,17 @@ class SafeZoneScreen extends StatefulWidget {
 
 class _SafeZoneScreenState extends State<SafeZoneScreen> {
 
+  int _childIdx = 0;
+
+  ChildModel? get _child =>
+      widget.children.isEmpty
+          ? null
+          : widget.children[_childIdx.clamp(0, widget.children.length - 1)];
+
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
+    final ch = _child;
 
     return Scaffold(
       backgroundColor: T.bg,
@@ -49,7 +60,9 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
                         ),
                       ),
                       Text(
-                        'Manage your child safe areas',
+                        ch != null
+                            ? "${ch.name}'s zones"
+                            : 'No children',
                         style: TextStyle(
                           color: T.sub,
                           fontSize: 12,
@@ -61,11 +74,71 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
               ),
             ),
 
+            // ── Child Selector ───────────────────────
+            if (widget.children.isNotEmpty)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: widget.children.asMap().entries.map((e) {
+                    final index = e.key;
+                    final child = e.value;
+                    final selected = index == _childIdx;
+
+                    final color = Color(child.colorHex);
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _childIdx = index;
+                        });
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? color.withOpacity(0.15)
+                              : T.card,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: selected ? color : T.border,
+                            width: selected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(child.avatar,
+                                style: const TextStyle(fontSize: 16)),
+                            const SizedBox(width: 6),
+                            Text(
+                              child.name,
+                              style: TextStyle(
+                                color: selected ? color : T.sub,
+                                fontSize: 12,
+                                fontWeight: selected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+            const SizedBox(height: 16),
+
             // ── Body Placeholder ─────────────────────
             Expanded(
               child: Center(
                 child: Text(
-                  'No Safe Zones Yet',
+                  ch == null
+                      ? 'No children registered'
+                      : 'No Safe Zones Yet',
                   style: TextStyle(
                     color: T.sub,
                     fontSize: 14,
