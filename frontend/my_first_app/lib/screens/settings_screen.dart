@@ -23,6 +23,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  bool _sound = true;
+  bool _vibrate = true;
+
   String _displayName = 'Alex Johnson';
   String _displayEmail = 'alex@email.com';
   String _displayPhone = '+94 71 234 5678';
@@ -121,6 +124,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+
+          const SizedBox(height: 20),
+
+          _SectionHeader('Appearance', T: T),
+
+          _SettingsGroup(
+            T: T,
+            children: [
+              _ToggleRow(
+                icon: widget.dark ? '🌙' : '☀️',
+                title: 'Dark Mode',
+                sub: 'Switch app appearance',
+                on: widget.dark,
+                onToggle: widget.toggleDark,
+                T: T,
+              ),
+            ],
+          ),
+
+          _SectionHeader('Sound & Vibration', T: T),
+
+          _SettingsGroup(
+            T: T,
+            children: [
+              _ToggleRow(
+                icon: '🔊',
+                title: 'Alert Sounds',
+                sub: 'Play sounds for notifications',
+                on: _sound,
+                onToggle: () => setState(() => _sound = !_sound),
+                T: T,
+              ),
+              _Divider(T: T),
+              _ToggleRow(
+                icon: '📳',
+                title: 'Vibration',
+                sub: 'Vibrate on alerts',
+                on: _vibrate,
+                onToggle: () => setState(() => _vibrate = !_vibrate),
+                T: T,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -214,7 +260,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? _displayPhone
                       : phoneCtrl.text.trim();
                 });
-
                 Navigator.pop(ctx);
               },
             ),
@@ -224,5 +269,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final AppTheme T;
+
+  const _SectionHeader(this.title, {required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: T.sub,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  final List<Widget> children;
+  final AppTheme T;
+
+  const _SettingsGroup({required this.children, required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: T.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: T.border),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _ToggleRow extends StatelessWidget {
+  final String icon, title, sub;
+  final bool on;
+  final VoidCallback onToggle;
+  final AppTheme T;
+
+  const _ToggleRow({
+    required this.icon,
+    required this.title,
+    required this.sub,
+    required this.on,
+    required this.onToggle,
+    required this.T,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: T.cyan.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Text(icon, style: const TextStyle(fontSize: 18)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: T.text,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(sub, style: TextStyle(color: T.sub, fontSize: 11)),
+              ],
+            ),
+          ),
+          KCToggle(on: on, onToggle: onToggle, T: T),
+        ],
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  final AppTheme T;
+
+  const _Divider({required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(height: 1, color: T.border, indent: 14, endIndent: 14);
   }
 }
