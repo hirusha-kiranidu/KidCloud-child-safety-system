@@ -6,12 +6,16 @@ class SafeZoneScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
   final List<ChildModel> children;
+  final List<ZoneModel> zones;
+  final Function(ZoneModel) onAddZone;
 
   const SafeZoneScreen({
     super.key,
     required this.go,
     required this.T,
     required this.children,
+    required this.zones,
+    required this.onAddZone,
   });
 
   @override
@@ -19,7 +23,6 @@ class SafeZoneScreen extends StatefulWidget {
 }
 
 class _SafeZoneScreenState extends State<SafeZoneScreen> {
-
   int _childIdx = 0;
   bool _adding = false;
 
@@ -38,12 +41,46 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
           ? null
           : widget.children[_childIdx.clamp(0, widget.children.length - 1)];
 
+  List<ZoneModel> get _myZones =>
+      _child == null
+          ? []
+          : widget.zones.where((z) => z.childId == _child!.id).toList();
+
   @override
   void dispose() {
     _nameCtrl.dispose();
     _startCtrl.dispose();
     _endCtrl.dispose();
     super.dispose();
+  }
+
+  void _saveZone() {
+    if (_child == null) return;
+    if (_startCtrl.text.isEmpty || _endCtrl.text.isEmpty) return;
+
+    final zone = ZoneModel(
+      id: DateTime.now().millisecondsSinceEpoch,
+      childId: _child!.id,
+      name: _nameCtrl.text.isEmpty ? _preset : _nameCtrl.text,
+      icon: '📍',
+      start: _startCtrl.text,
+      end: _endCtrl.text,
+      radius: _radius,
+      colorHex: 0xFFF97316,
+      active: true,
+      inZone: true,
+    );
+
+    widget.onAddZone(zone);
+
+    setState(() {
+      _adding = false;
+      _nameCtrl.clear();
+      _startCtrl.clear();
+      _endCtrl.clear();
+      _preset = 'Home';
+      _radius = 200;
+    });
   }
 
   @override
@@ -106,9 +143,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
                         decoration: BoxDecoration(
                           color: selected ? color.withOpacity(0.15) : T.card,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: selected ? color : T.border,
-                          ),
+                          border: Border.all(color: selected ? color : T.border),
                         ),
                         child: Row(
                           children: [
@@ -141,19 +176,33 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
                   radii: _radii,
                   onPreset: (p) => setState(() => _preset = p),
                   onRadius: (r) => setState(() => _radius = r),
+                  onSave: _saveZone,
                   onCancel: () => setState(() => _adding = false),
                 ),
               )
             else
               Expanded(
-                child: Center(
-                  child: Text(
-                    ch == null
-                        ? 'No children registered'
-                        : 'No Safe Zones Yet',
-                    style: TextStyle(color: T.sub),
-                  ),
-                ),
+                child: _myZones.isEmpty
+                    ? Center(
+                        child: Text(
+                          ch == null
+                              ? 'No children registered'
+                              : 'No Safe Zones Yet',
+                          style: TextStyle(color: T.sub),
+                        ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: _myZones
+                            .map((z) => ListTile(
+                                  title: Text(z.name,
+                                      style: TextStyle(color: T.text)),
+                                  subtitle: Text(
+                                      '${z.start} → ${z.end} (${z.radius}m)',
+                                      style: TextStyle(color: T.sub)),
+                                ))
+                            .toList(),
+                      ),
               ),
 
             // ── Add Button ───────────────────────────
@@ -178,7 +227,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
   }
 }
 
-// ── Add Zone Form UI ─────────────────────────────
+// ── Add Zone Form ─────────────────────────────
 class _AddZoneForm extends StatelessWidget {
   final AppTheme T;
   final TextEditingController nameCtrl, startCtrl, endCtrl;
@@ -188,7 +237,7 @@ class _AddZoneForm extends StatelessWidget {
   final List<int> radii;
   final Function(String) onPreset;
   final Function(int) onRadius;
-  final VoidCallback onCancel;
+  final VoidCallback onSave, onCancel;
 
   const _AddZoneForm({
     required this.T,
@@ -201,6 +250,7 @@ class _AddZoneForm extends StatelessWidget {
     required this.radii,
     required this.onPreset,
     required this.onRadius,
+    required this.onSave,
     required this.onCancel,
   });
 
@@ -209,27 +259,7 @@ class _AddZoneForm extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          Text('Zone Type', style: TextStyle(color: T.sub)),
-
-          Wrap(
-            spacing: 8,
-            children: presets.map((p) {
-              final selected = p == preset;
-              return GestureDetector(
-                onTap: () => onPreset(p),
-                child: Chip(
-                  label: Text(p),
-                  backgroundColor:
-                      selected ? T.cyan.withOpacity(0.2) : T.card,
-                ),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 16),
 
           TextField(
             controller: nameCtrl,
@@ -248,22 +278,15 @@ class _AddZoneForm extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          Text('Radius', style: TextStyle(color: T.sub)),
-
           Row(
             children: radii.map((r) {
-              final selected = r == radius;
               return Expanded(
                 child: GestureDetector(
                   onTap: () => onRadius(r),
                   child: Container(
                     margin: const EdgeInsets.all(4),
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? T.cyan.withOpacity(0.2)
-                          : T.card,
-                    ),
+                    color: r == radius ? T.cyan : T.card,
                     child: Center(child: Text('${r}m')),
                   ),
                 ),
@@ -271,10 +294,10 @@ class _AddZoneForm extends StatelessWidget {
             }).toList(),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           ElevatedButton(
-            onPressed: () {}, // save later
+            onPressed: onSave,
             child: const Text('Save Zone'),
           ),
 
