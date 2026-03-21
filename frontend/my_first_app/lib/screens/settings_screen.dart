@@ -196,6 +196,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
+
+          _SectionHeader('Help & Support', T: T),
+          _SettingsGroup(
+            T: T,
+            children: [
+              _NavRow(
+                icon: '❓',
+                title: 'FAQ',
+                sub: 'Frequently asked questions',
+                onTap: () => _showFAQ(context, T),
+                T: T,
+              ),
+              _Divider(T: T),
+              _NavRow(
+                icon: '💬',
+                title: 'Contact Support',
+                sub: 'Get help from our team',
+                onTap: () => _showContactSupport(context, T),
+                T: T,
+              ),
+              _Divider(T: T),
+              _NavRow(
+                icon: '⚠️',
+                title: 'Report a Problem',
+                sub: 'Tell us what went wrong',
+                onTap: () => _showReportForm(context, T),
+                T: T,
+              ),
+              _Divider(T: T),
+              _NavRow(
+                icon: '⭐',
+                title: 'Feedback',
+                sub: 'Rate the app or send suggestions',
+                onTap: () => _showFeedbackForm(context, T),
+                T: T,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          GestureDetector(
+            onTap: widget.onLogout,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              decoration: BoxDecoration(
+                color: T.red.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: T.red.withOpacity(0.35)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.logout_rounded, color: T.red, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Sign Out',
+                    style: TextStyle(
+                      color: T.red,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -223,7 +291,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 16),
             KCInput(label: 'Full Name', icon: '👤', controller: nameCtrl, T: T),
             KCInput(
               label: 'Email Address',
@@ -266,9 +333,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: ctx,
       isScrollControlled: true,
       backgroundColor: T.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (_) => StatefulBuilder(
         builder: (ctx2, setSt) => Padding(
           padding: EdgeInsets.only(
@@ -350,6 +414,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
+  void _showFAQ(BuildContext ctx, AppTheme T) {}
+  void _showContactSupport(BuildContext ctx, AppTheme T) {}
+  void _showReportForm(BuildContext ctx, AppTheme T) {}
+  void _showFeedbackForm(BuildContext ctx, AppTheme T) {}
 }
 
 class _SectionHeader extends StatelessWidget {
