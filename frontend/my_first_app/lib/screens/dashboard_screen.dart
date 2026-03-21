@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models.dart';
+import '../widgets/shared_widgets.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String) go;
@@ -94,16 +95,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 12),
 
-          // ── Voice Detection ────────────────────
+          // ── Voice Detection ───────
           _VoiceDetectionCard(T: T),
 
           const SizedBox(height: 12),
 
-          // ── Live Location Card
+          // ── Live Location ─────
           GestureDetector(
             onTap: () => widget.go('map'),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: T.card,
                 borderRadius: BorderRadius.circular(16),
@@ -111,63 +112,181 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: T.cyan.withOpacity(0.13),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text('📍', style: TextStyle(fontSize: 22)),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
+                  const Text('📍', style: TextStyle(fontSize: 22)),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Live Location',
-                          style: TextStyle(
-                            color: T.text,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          '${widget.children.where((c) => c.online).length} of ${widget.children.length} children tracked',
-                          style: TextStyle(color: T.sub, fontSize: 11),
-                        ),
-                      ],
+                    child: Text(
+                      '${widget.children.where((c) => c.online).length} of ${widget.children.length} children tracked',
+                      style: TextStyle(color: T.text),
                     ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: T.cyan,
-                    size: 16,
                   ),
                 ],
               ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Placeholder
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: T.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: T.border),
-            ),
-            child: Text(
-              'More features coming next...',
-              style: TextStyle(color: T.text),
+          // ── MY CHILDREN
+          Text(
+            'MY CHILDREN',
+            style: TextStyle(
+              color: T.sub,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 10),
+
+          ...widget.children.map(
+            (child) => GestureDetector(
+              onTap: () {
+                widget.setChild(child);
+                widget.go('tracking');
+              },
+              child: _ChildCard(child: child, T: T),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChildCard extends StatelessWidget {
+  final ChildModel child;
+  final AppTheme T;
+
+  const _ChildCard({required this.child, required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Color(child.colorHex);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: T.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: T.border),
+      ),
+      child: Column(
+        children: [
+          // Top Row
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: color, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    child.avatar,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${child.name} · ${child.age}y',
+                      style: TextStyle(
+                        color: T.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '● ${child.status}',
+                      style: TextStyle(color: color, fontSize: 12),
+                    ),
+                    Text(
+                      child.school,
+                      style: TextStyle(color: T.sub, fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+
+              BatteryWidget(pct: child.battery, T: T),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Mini Stats
+          Row(
+            children: [
+              _MiniStat(
+                val: child.online ? 'Active' : 'Offline',
+                label: 'Status',
+                T: T,
+              ),
+              _MiniStat(val: '${child.battery}%', label: 'Battery', T: T),
+              _MiniStat(val: child.device, label: 'Device', T: T),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Mini Stat Widget
+class _MiniStat extends StatelessWidget {
+  final String val, label;
+  final AppTheme T;
+
+  const _MiniStat({required this.val, required this.label, required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            val,
+            style: TextStyle(
+              color: T.text,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(label, style: TextStyle(color: T.sub, fontSize: 9)),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoiceDetectionCard extends StatelessWidget {
+  final AppTheme T;
+  const _VoiceDetectionCard({required this.T});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: T.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: T.border),
+      ),
+      child: Row(
+        children: [
+          const Text('🎙️', style: TextStyle(fontSize: 22)),
+          const SizedBox(width: 12),
+          Text('Voice Detection Active', style: TextStyle(color: T.text)),
         ],
       ),
     );
@@ -195,95 +314,21 @@ class _EmergencyAlertCard extends StatelessWidget {
     required this.T,
   });
 
-  ChildModel? get _selected {
-    if (children.isEmpty) return null;
-    if (selectedChildId == null) return children.first;
-    return children.firstWhere(
-      (c) => c.id == selectedChildId,
-      orElse: () => children.first,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final child = _selected;
-    final childName = child?.name ?? 'Your Child';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: emergency
-            ? (flash ? T.red.withOpacity(0.18) : T.red.withOpacity(0.08))
-            : T.green.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: emergency ? (flash ? T.red : T.red.withOpacity(0.5)) : T.green,
-          width: emergency ? 2 : 1.5,
-        ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: emergency
-                        ? (flash ? T.red : T.red.withOpacity(0.3))
-                        : T.green.withOpacity(0.15),
-                  ),
-                  child: Center(
-                    child: Text(
-                      emergency ? '🆘' : '🛡️',
-                      style: const TextStyle(fontSize: 22),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    emergency
-                        ? '$childName pressed the SOS button'
-                        : 'No emergency detected',
-                    style: TextStyle(color: emergency ? T.red : T.green),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VoiceDetectionCard extends StatelessWidget {
-  final AppTheme T;
-
-  const _VoiceDetectionCard({required this.T});
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: T.card,
+        color: emergency ? T.red.withOpacity(0.1) : T.green.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: T.border),
       ),
       child: Row(
         children: [
-          const Text('🎙️', style: TextStyle(fontSize: 22)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Voice Detection Active',
-              style: TextStyle(color: T.text),
-            ),
+          Text(emergency ? '🆘 SOS Alert' : '🛡️ All Safe'),
+          const Spacer(),
+          GestureDetector(
+            onTap: onTest,
+            child: Text(emergency ? 'ALERT' : 'SAFE'),
           ),
         ],
       ),
