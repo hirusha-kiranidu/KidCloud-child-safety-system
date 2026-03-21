@@ -94,8 +94,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 12),
 
-          // ── Voice Detection Card (NEW - Commit 5) ──
+          // ── Voice Detection ────────────────────
           _VoiceDetectionCard(T: T),
+
+          const SizedBox(height: 12),
+
+          // ── Live Location Card
+          GestureDetector(
+            onTap: () => widget.go('map'),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                color: T.card,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: T.cyan.withOpacity(0.35), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: T.cyan.withOpacity(0.13),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Text('📍', style: TextStyle(fontSize: 22)),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Live Location',
+                          style: TextStyle(
+                            color: T.text,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '${widget.children.where((c) => c.online).length} of ${widget.children.length} children tracked',
+                          style: TextStyle(color: T.sub, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: T.cyan,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
 
           const SizedBox(height: 20),
 
@@ -166,9 +221,7 @@ class _EmergencyAlertCard extends StatelessWidget {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -192,136 +245,16 @@ class _EmergencyAlertCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        emergency ? 'SOS Alert' : 'All Safe',
-                        style: TextStyle(
-                          color: emergency ? T.red : T.green,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        emergency
-                            ? '$childName pressed the SOS button'
-                            : 'No emergency detected',
-                        style: TextStyle(
-                          color: emergency ? T.red : T.green,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: onTest,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: emergency
-                          ? T.red.withOpacity(0.15)
-                          : T.green.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      emergency ? 'ALERT' : 'SAFE',
-                      style: TextStyle(
-                        color: emergency ? T.red : T.green,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  child: Text(
+                    emergency
+                        ? '$childName pressed the SOS button'
+                        : 'No emergency detected',
+                    style: TextStyle(color: emergency ? T.red : T.green),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Child selector
-          if (children.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: children.map((ch) {
-                    final isSelected =
-                        (selectedChildId ?? children.first.id) == ch.id;
-                    final color = Color(ch.colorHex);
-
-                    return GestureDetector(
-                      onTap: () => onSelectChild(ch.id),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected ? color.withOpacity(0.15) : T.card2,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected ? color : T.border,
-                          ),
-                        ),
-                        child: Text(
-                          ch.name,
-                          style: TextStyle(
-                            color: isSelected ? color : T.sub,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-
-          // Actions
-          if (emergency)
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: onDismiss,
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: T.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Mark as Resolved',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: T.red),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text('Call 119', style: TextStyle(color: T.red)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
@@ -336,7 +269,7 @@ class _VoiceDetectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: T.card,
         borderRadius: BorderRadius.circular(16),
@@ -344,46 +277,12 @@ class _VoiceDetectionCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: T.cyan.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Text('🎙️', style: TextStyle(fontSize: 22)),
-            ),
-          ),
+          const Text('🎙️', style: TextStyle(fontSize: 22)),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Voice Detection',
-                  style: TextStyle(color: T.text, fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  'Wristband mic monitors for distress keywords',
-                  style: TextStyle(color: T.sub, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: T.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
             child: Text(
-              'Active',
-              style: TextStyle(
-                color: T.green,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
+              'Voice Detection Active',
+              style: TextStyle(color: T.text),
             ),
           ),
         ],
