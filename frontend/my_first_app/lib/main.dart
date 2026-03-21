@@ -3,7 +3,7 @@ import 'theme/app_theme.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/onboard_screen.dart';
-import 'screens/auth_screen.dart'; // AUTH SCREEN IMPORT
+import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/tracking_screen.dart';
 import 'screens/notifs_screen.dart';
@@ -64,14 +64,10 @@ class _MyAppState extends State<MyApp> {
         return SignupScreen(go: go, T: T);
       case "login":
         return LoginScreen(go: go, T: T);
-      // ...other cases if needed...
+      case "dashboard":
+        return DashboardScreen(go: go, setChild: (_) {}, children: [], T: T);
+      default:
+        return Center(child: Text('Unknown screen: "$screen"'));
     }
-    // Default fallback if no case matches
-    return Center(
-      child: Text(
-        'Unknown screen: '
-        '"[screen]"',
-      ),
-    );
   }
 }
