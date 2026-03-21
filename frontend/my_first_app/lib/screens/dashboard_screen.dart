@@ -32,7 +32,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-
     _timer = Timer.periodic(const Duration(milliseconds: 800), (_) {
       if (mounted) setState(() => _flash = !_flash);
     });
@@ -53,7 +52,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ─────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -78,10 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          // ── SOS CARD ───────────────────────────
           _EmergencyAlertCard(
             emergency: _emergency,
             flash: _flash,
@@ -92,15 +87,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTest: () => setState(() => _emergency = !_emergency),
             T: T,
           ),
-
           const SizedBox(height: 12),
-
-          // ── Voice Detection ───────
           _VoiceDetectionCard(T: T),
-
           const SizedBox(height: 12),
-
-          // ── Live Location ─────
           GestureDetector(
             onTap: () => widget.go('map'),
             child: Container(
@@ -124,10 +113,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // ── MY CHILDREN
           Text(
             'MY CHILDREN',
             style: TextStyle(
@@ -137,7 +123,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 10),
-
           ...widget.children.map(
             (child) => GestureDetector(
               onTap: () {
@@ -147,7 +132,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: _ChildCard(child: child, T: T),
             ),
           ),
-
+          const SizedBox(height: 10),
+          Text(
+            'QUICK ACTIONS',
+            style: TextStyle(
+              color: T.sub,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.8,
+            children: [
+              for (final item in [
+                ['➕', 'Add Child', 'addchild'],
+                ['👶', 'Manage Children', 'managechild'],
+                ['🛡️', 'Safe Zones', 'safezone'],
+                ['📞', 'Emergency', 'emergency'],
+                ['🗓️', 'Route History', 'route'],
+              ])
+                _QuickActionBtn(
+                  icon: item[0],
+                  label: item[1],
+                  onTap: () => widget.go(item[2]),
+                  T: T,
+                ),
+            ],
+          ),
           const SizedBox(height: 20),
         ],
       ),
@@ -175,7 +192,6 @@ class _ChildCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Top Row
           Row(
             children: [
               Container(
@@ -194,7 +210,6 @@ class _ChildCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,14 +232,10 @@ class _ChildCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               BatteryWidget(pct: child.battery, T: T),
             ],
           ),
-
           const SizedBox(height: 10),
-
-          // Mini Stats
           Row(
             children: [
               _MiniStat(
@@ -242,7 +253,6 @@ class _ChildCard extends StatelessWidget {
   }
 }
 
-// Mini Stat Widget
 class _MiniStat extends StatelessWidget {
   final String val, label;
   final AppTheme T;
@@ -269,8 +279,53 @@ class _MiniStat extends StatelessWidget {
   }
 }
 
+class _QuickActionBtn extends StatelessWidget {
+  final String icon, label;
+  final VoidCallback onTap;
+  final AppTheme T;
+
+  const _QuickActionBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.T,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: T.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: T.border),
+        ),
+        child: Row(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: T.text,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _VoiceDetectionCard extends StatelessWidget {
   final AppTheme T;
+
   const _VoiceDetectionCard({required this.T});
 
   @override
