@@ -1,174 +1,93 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../models.dart';
+import 'theme/app_theme.dart';
 
-class SafeZoneScreen extends StatefulWidget {
-  final Function(String) go;
-  final AppTheme T;
-  final List<ChildModel> children;
+import 'screens/splash_screen.dart';
+import 'screens/onboard_screen.dart';
+import 'screens/safe_zone_screen.dart';
 
-  const SafeZoneScreen({
-    super.key,
-    required this.go,
-    required this.T,
-    required this.children,
-  });
-
-  @override
-  State<SafeZoneScreen> createState() => _SafeZoneScreenState();
+void main() {
+  runApp(const MyApp());
 }
 
-class _SafeZoneScreenState extends State<SafeZoneScreen> {
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
 
-  int _childIdx = 0;
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
 
-  ChildModel? get _child =>
-      widget.children.isEmpty
-          ? null
-          : widget.children[_childIdx.clamp(0, widget.children.length - 1)];
+class _MyAppState extends State<MyApp> {
+  String screen = "splash";
+
+  void go(String nextScreen) {
+    setState(() {
+      screen = nextScreen;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final T = widget.T;
-    final ch = _child;
+    final T = AppTheme(
+      bgTop: Colors.blue.shade900,
+      bgBottom: Colors.blue.shade400,
+      border: Colors.grey,
+      text: Colors.white,
+      sub: Colors.white70,
+      cyan: Colors.cyan,
+      blue: Colors.blue,
+      card: Colors.white,    // added card color
+    );
 
-    return Scaffold(
-      backgroundColor: T.bg,
-      body: SafeArea(
-        child: Column(
-          children: [
+    // Sample children for SafeZoneScreen
+    final children = [
+      ChildModel(id: 1, name: 'Emma', avatar: '👧', colorHex: 0xFF3B82F6),
+      ChildModel(id: 2, name: 'Liam', avatar: '👦', colorHex: 0xFF22C55E),
+    ];
 
-            // ── Top Bar ─────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => widget.go('dashboard'),
-                    child: Icon(Icons.arrow_back, color: T.text),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Safe Zones',
-                        style: TextStyle(
-                          color: T.text,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        ch != null
-                            ? "${ch.name}'s zones"
-                            : 'No children',
-                        style: TextStyle(
-                          color: T.sub,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Child Selector ───────────────────────
-            if (widget.children.isNotEmpty)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: widget.children.asMap().entries.map((e) {
-                    final index = e.key;
-                    final child = e.value;
-                    final selected = index == _childIdx;
-
-                    final color = Color(child.colorHex);
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _childIdx = index;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? color.withOpacity(0.15)
-                              : T.card,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: selected ? color : T.border,
-                            width: selected ? 1.5 : 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(child.avatar,
-                                style: const TextStyle(fontSize: 16)),
-                            const SizedBox(width: 6),
-                            Text(
-                              child.name,
-                              style: TextStyle(
-                                color: selected ? color : T.sub,
-                                fontSize: 12,
-                                fontWeight: selected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-            const SizedBox(height: 16),
-
-            // ── Body Placeholder ─────────────────────
-            Expanded(
-              child: Center(
-                child: Text(
-                  ch == null
-                      ? 'No children registered'
-                      : 'No Safe Zones Yet',
-                  style: TextStyle(
-                    color: T.sub,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Add Button ───────────────────────────
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: () {
-                  // will implement later
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: T.cyan,
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                child: const Text(
-                  '+ Add Zone',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: SafeArea(
+          child: buildScreen(T, children),
         ),
       ),
     );
   }
+
+  Widget buildScreen(AppTheme T, List<ChildModel> children) {
+    switch (screen) {
+      case "splash":
+        return SplashScreen(go: go, T: T);
+
+      case "onboard0":
+        return OnboardScreen(idx: 0, go: go, T: T);
+
+      case "onboard1":
+        return OnboardScreen(idx: 1, go: go, T: T);
+
+      case "onboard2":
+        return OnboardScreen(idx: 2, go: go, T: T);
+
+      case "safezone":
+        return SafeZoneScreen(go: go, T: T, children: children);
+
+      default:
+        return SplashScreen(go: go, T: T);
+    }
+  }
+}
+
+// Dummy ChildModel for demonstration (replace with your real models.dart)
+class ChildModel {
+  final int id;
+  final String name;
+  final String avatar;
+  final int colorHex;
+
+  ChildModel({
+    required this.id,
+    required this.name,
+    required this.avatar,
+    required this.colorHex,
+  });
 }
