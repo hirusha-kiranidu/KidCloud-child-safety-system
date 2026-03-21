@@ -24,17 +24,17 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _flash = false;
   bool _emergency = false;
+  int? _selectedChildId; // NEW (Commit 3)
+
   late Timer _timer;
 
   @override
   void initState() {
     super.initState();
 
-    // Pulsing animation timer
+    // Pulsing animation
     _timer = Timer.periodic(const Duration(milliseconds: 800), (_) {
-      if (mounted) {
-        setState(() => _flash = !_flash);
-      }
+      if (mounted) setState(() => _flash = !_flash);
     });
   }
 
@@ -53,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          //  Header
+          // ── Header ─────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -81,18 +81,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 16),
 
-          // SOS ALERT CARD
           _EmergencyAlertCard(
             emergency: _emergency,
             flash: _flash,
             children: widget.children,
+            selectedChildId: _selectedChildId,
+            onSelectChild: (id) => setState(() => _selectedChildId = id),
             onTest: () => setState(() => _emergency = !_emergency),
             T: T,
           ),
 
           const SizedBox(height: 20),
 
-          // Placeholder (rest of dashboard comes later)
+          // Placeholder
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -101,17 +102,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: T.border),
             ),
-            child: Column(
-              children: [
-                Text(
-                  'More features coming in next commits...',
-                  style: TextStyle(
-                    color: T.text,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            child: Text(
+              'More features coming next...',
+              style: TextStyle(color: T.text),
             ),
           ),
         ],
@@ -120,12 +113,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-//  EMERGENCY ALERT CARD
-
 class _EmergencyAlertCard extends StatelessWidget {
   final bool emergency;
   final bool flash;
   final List<ChildModel> children;
+  final int? selectedChildId;
+  final Function(int) onSelectChild;
   final VoidCallback onTest;
   final AppTheme T;
 
@@ -133,16 +126,29 @@ class _EmergencyAlertCard extends StatelessWidget {
     required this.emergency,
     required this.flash,
     required this.children,
+    required this.selectedChildId,
+    required this.onSelectChild,
     required this.onTest,
     required this.T,
   });
 
+  // Get selected child (default = first)
+  ChildModel? get _selected {
+    if (children.isEmpty) return null;
+    if (selectedChildId == null) return children.first;
+    return children.firstWhere(
+      (c) => c.id == selectedChildId,
+      orElse: () => children.first,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final childName = children.isNotEmpty ? children.first.name : 'Your Child';
+    final T = this.T;
+    final child = _selected;
+    final childName = child?.name ?? 'Your Child';
 
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: emergency
             ? (flash ? T.red.withOpacity(0.18) : T.red.withOpacity(0.08))
@@ -150,76 +156,139 @@ class _EmergencyAlertCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: emergency ? T.red : T.green, width: 1.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Icon ──────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: emergency
-                  ? (flash ? T.red : T.red.withOpacity(0.3))
-                  : T.green.withOpacity(0.15),
-            ),
-            child: Center(
-              child: Text(
-                emergency ? '🆘' : '🛡️',
-                style: const TextStyle(fontSize: 22),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // ── Text ──
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // ── Top Row ───────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
               children: [
-                Text(
-                  emergency ? 'SOS Alert' : 'All Safe',
-                  style: TextStyle(
-                    color: emergency ? T.red : T.green,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: emergency
+                        ? (flash ? T.red : T.red.withOpacity(0.3))
+                        : T.green.withOpacity(0.15),
+                  ),
+                  child: Center(
+                    child: Text(
+                      emergency ? '🆘' : '🛡️',
+                      style: const TextStyle(fontSize: 22),
+                    ),
                   ),
                 ),
-                Text(
-                  emergency
-                      ? '$childName pressed the SOS button'
-                      : 'No emergency detected',
-                  style: TextStyle(
-                    color: emergency ? T.red : T.green,
-                    fontSize: 12,
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        emergency ? 'SOS Alert' : 'All Safe',
+                        style: TextStyle(
+                          color: emergency ? T.red : T.green,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        emergency
+                            ? '$childName pressed the SOS button'
+                            : 'No emergency detected',
+                        style: TextStyle(
+                          color: emergency ? T.red : T.green,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                GestureDetector(
+                  onTap: onTest,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: emergency
+                          ? T.red.withOpacity(0.15)
+                          : T.green.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      emergency ? 'ALERT' : 'SAFE',
+                      style: TextStyle(
+                        color: emergency ? T.red : T.green,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          // ── Demo Toggle Button ────
-          GestureDetector(
-            onTap: onTest,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: emergency
-                    ? T.red.withOpacity(0.15)
-                    : T.green.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                emergency ? 'ALERT' : 'SAFE',
-                style: TextStyle(
-                  color: emergency ? T.red : T.green,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+          // ── Child Selector (NEW - Commit 3) ─────
+          if (children.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: children.map((ch) {
+                    final isSelected =
+                        (selectedChildId ?? children.first.id) == ch.id;
+                    final color = Color(ch.colorHex);
+
+                    return GestureDetector(
+                      onTap: () => onSelectChild(ch.id),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected ? color.withOpacity(0.15) : T.card2,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? color : T.border,
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              ch.avatar,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              ch.name,
+                              style: TextStyle(
+                                color: isSelected ? color : T.sub,
+                                fontSize: 11,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
