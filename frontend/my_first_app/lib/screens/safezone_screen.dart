@@ -85,6 +85,13 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
     });
   }
 
+  // ── Toggle In-Zone Status ─────────────────────
+  void _toggleInZone(ZoneModel z) {
+    z.inZone = !z.inZone;
+    widget.onUpdateZone(z);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
@@ -120,108 +127,33 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
               ),
             ),
 
-            // ── Child Selector ───────────────────────
-            if (widget.children.isNotEmpty)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: widget.children.asMap().entries.map((e) {
-                    final index = e.key;
-                    final child = e.value;
-                    final selected = index == _childIdx;
-                    final color = Color(child.colorHex);
+            const SizedBox(height: 10),
 
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _childIdx = index;
-                          _adding = false;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: selected ? color.withOpacity(0.15) : T.card,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: selected ? color : T.border),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(child.avatar),
-                            const SizedBox(width: 6),
-                            Text(child.name,
-                                style: TextStyle(
-                                    color: selected ? color : T.sub)),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-            const SizedBox(height: 16),
-
-            // ── Body ────────────────────────────────
+            // ── Zone List ───────────────────────────
             Expanded(
-              child: _adding && ch != null
-                  ? _AddZoneForm(
-                      T: T,
-                      nameCtrl: _nameCtrl,
-                      startCtrl: _startCtrl,
-                      endCtrl: _endCtrl,
-                      preset: _preset,
-                      radius: _radius,
-                      presets: _presets,
-                      radii: _radii,
-                      onPreset: (p) => setState(() => _preset = p),
-                      onRadius: (r) => setState(() => _radius = r),
-                      onSave: _saveZone,
-                      onCancel: () => setState(() => _adding = false),
+              child: _myZones.isEmpty
+                  ? Center(
+                      child: Text('No Safe Zones Yet',
+                          style: TextStyle(color: T.sub)),
                     )
-                  : _myZones.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No Safe Zones Yet',
-                            style: TextStyle(color: T.sub),
-                          ),
-                        )
-                      : ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: _myZones
-                              .map((z) => _ZoneCard(
-                                    zone: z,
-                                    T: T,
-                                    onToggle: () {
-                                      z.active = !z.active;
-                                      widget.onUpdateZone(z);
-                                      setState(() {});
-                                    },
-                                    onDelete: () {
-                                      widget.onDeleteZone(z.id);
-                                    },
-                                  ))
-                              .toList(),
-                        ),
+                  : ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: _myZones
+                          .map((z) => _ZoneCard(
+                                zone: z,
+                                T: T,
+                                onToggle: () {
+                                  z.active = !z.active;
+                                  widget.onUpdateZone(z);
+                                  setState(() {});
+                                },
+                                onToggleInZone: () => _toggleInZone(z),
+                                onDelete: () =>
+                                    widget.onDeleteZone(z.id),
+                              ))
+                          .toList(),
+                    ),
             ),
-
-            // ── Add Button ───────────────────────────
-            if (!_adding)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() => _adding = true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: T.cyan,
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  child: const Text('+ Add Zone'),
-                ),
-              ),
           ],
         ),
       ),
@@ -229,17 +161,19 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
   }
 }
 
-// ── Zone Card UI ─────────────────────────────
+// ── Zone Card with Status ─────────────────────
 class _ZoneCard extends StatelessWidget {
   final ZoneModel zone;
   final AppTheme T;
   final VoidCallback onToggle;
+  final VoidCallback onToggleInZone;
   final VoidCallback onDelete;
 
   const _ZoneCard({
     required this.zone,
     required this.T,
     required this.onToggle,
+    required this.onToggleInZone,
     required this.onDelete,
   });
 
@@ -247,17 +181,27 @@ class _ZoneCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = Color(zone.colorHex);
 
+    final statusColor = zone.inZone ? Colors.green : Colors.red;
+    final statusText =
+        zone.inZone ? 'Child is SAFE ✅' : 'Child NOT in Zone ⚠️';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: T.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: T.border),
+        border: Border.all(
+          color: zone.active
+              ? statusColor.withOpacity(0.5)
+              : T.border,
+          width: zone.active ? 1.5 : 1,
+        ),
       ),
       child: Column(
         children: [
 
+          // ── Top Row ─────────────────────────
           Row(
             children: [
               Container(
@@ -270,6 +214,7 @@ class _ZoneCard extends StatelessWidget {
                 child: Center(child: Text(zone.icon)),
               ),
               const SizedBox(width: 12),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,7 +241,35 @@ class _ZoneCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+
+          // ── Status Box ──────────────────────
+          GestureDetector(
+            onTap: onToggleInZone,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: statusColor),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.circle, size: 10, color: statusColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 6),
 
           Align(
             alignment: Alignment.centerLeft,
@@ -307,41 +280,6 @@ class _ZoneCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// ── Add Zone Form (same as previous) ─────────
-class _AddZoneForm extends StatelessWidget {
-  final AppTheme T;
-  final TextEditingController nameCtrl, startCtrl, endCtrl;
-  final String preset;
-  final int radius;
-  final List<String> presets;
-  final List<int> radii;
-  final Function(String) onPreset;
-  final Function(int) onRadius;
-  final VoidCallback onSave, onCancel;
-
-  const _AddZoneForm({
-    required this.T,
-    required this.nameCtrl,
-    required this.startCtrl,
-    required this.endCtrl,
-    required this.preset,
-    required this.radius,
-    required this.presets,
-    required this.radii,
-    required this.onPreset,
-    required this.onRadius,
-    required this.onSave,
-    required this.onCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Form UI here (same as previous commit)'),
     );
   }
 }
