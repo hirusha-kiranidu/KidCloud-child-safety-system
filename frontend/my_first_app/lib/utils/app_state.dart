@@ -65,6 +65,7 @@ class AppState extends ChangeNotifier {
       _mockLat +=
           (0.001 - (0.002 * (0.5 - (DateTime.now().millisecond / 1000))));
       _mockLng += (0.001 - (0.002 * (0.5 - (DateTime.now().second / 60))));
+
       if (children.isNotEmpty) {
         final updated = children.first.copyWith(last: 'Just now');
         children = children
