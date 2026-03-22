@@ -9,13 +9,15 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.parent import Parent
 from app.models.parent_otp import ParentOTP
-from app.schemas.auth_schema import OTPVerifyRequest, ParentRegister
+from app.schemas.auth_schema import LoginRequest, OTPVerifyRequest, ParentRegister
+from app.services.auth.email_service import send_otp_email
 from app.services.auth.email_service import send_otp_email
 from app.services.auth.jwt_service import create_access_token
 from app.services.auth.otp_service import create_otp
-from app.services.auth.password_service import hash_password
+from app.services.auth.password_service import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
 
 
 @router.post("/register")
@@ -50,6 +52,8 @@ def register(data: ParentRegister, db: Session = Depends(get_db)):
     send_otp_email(parent.email, otp_code)
 
     return {"message": "Account created. OTP sent to your email."}
+
+
 
 @router.post("/verify-otp")
 def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
@@ -87,4 +91,20 @@ def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
     }
 
-    
+@router.post("/login")
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    """Initiate login by verifying credentials and sending an OTP."""
+    parent = db.query(Parent).filter(Parent.email == data.email).first()
+    if not parent:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(data.password, parent.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid password")
+
+    if not parent.is_verified:
+        raise HTTPException(status_code=403, detail="Email not verified")
+
+    otp_code = create_otp(db, parent.id)
+    send_otp_email(parent.email, otp_code)
+
+    return {"message": "OTP sent to your email for login verification"}
