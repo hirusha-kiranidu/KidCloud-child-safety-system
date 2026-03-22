@@ -27,7 +27,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   Widget build(BuildContext context) {
     final T = widget.T;
 
-    // Children that have a teacher name entered
     final childrenWithTeacher = widget.children
         .where((c) => c.teacherName.isNotEmpty)
         .toList();
@@ -65,7 +64,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
           ),
 
-          // ── Info banner ──────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             margin: const EdgeInsets.only(bottom: 16),
@@ -88,7 +86,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
           ),
 
-          // ── Add custom contact form ──────────────────
           if (_adding) ...[
             _CustomContactForm(
               T: T,
@@ -103,7 +100,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             const SizedBox(height: 8),
           ],
 
-          // ── PINNED: Police ───────────────────────────
           Text(
             'EMERGENCY SERVICES',
             style: TextStyle(
@@ -131,7 +127,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Section header with child avatar + name
                   Row(
                     children: [
                       Container(
@@ -178,7 +173,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               );
             }),
           ] else if (widget.children.isNotEmpty) ...[
-            // Children exist but no teachers added yet
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -237,7 +231,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             const SizedBox(height: 16),
           ],
 
-          // ── Custom contacts ──────────────────────────
           if (_custom.isNotEmpty) ...[
             Text(
               'OTHER CONTACTS',
@@ -268,7 +261,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   }
 }
 
-// ── Reusable emergency contact card ───────────────────
 class _EmergencyContactCard extends StatelessWidget {
   final String avatar, name, role, phone;
   final Color color;
@@ -389,7 +381,6 @@ class _EmergencyContactCard extends StatelessWidget {
   }
 }
 
-// ── Add custom contact form ────────────────────────────
 class _CustomContactForm extends StatefulWidget {
   final AppTheme T;
   final Function(Map<String, String>) onSave;
