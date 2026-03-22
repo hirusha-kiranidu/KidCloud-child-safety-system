@@ -25,7 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _sound = true;
   bool _vibrate = true;
 
-  // Profile stored locally (backend saves via API in production)
+  // Profile stored locally - backend saves via API in production
   String _displayName = 'Alex Johnson';
   String _displayEmail = 'alex@email.com';
   String _displayPhone = '+94 71 234 5678';
@@ -48,7 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 18),
 
-          // ── Profile card ───────────────────────────────
+          // Profile card
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -125,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 20),
 
-          // ── Appearance ──────────────────────────────────
+          // Appearance
           _SectionHeader('Appearance', T: T),
           _SettingsGroup(
             T: T,
@@ -141,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          // ── Sound & Vibration ──────────────────────────
+          // Sound & Vibration
           _SectionHeader('Sound & Vibration', T: T),
           _SettingsGroup(
             T: T,
@@ -166,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          // ── Account ────────────────────────────────────
+          // Account
           _SectionHeader('Account', T: T),
           _SettingsGroup(
             T: T,
@@ -198,7 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          // ── Help & Support ─────────────────────────────
+          // Help & Support
           _SectionHeader('Help & Support', T: T),
           Container(
             margin: const EdgeInsets.only(bottom: 14),
@@ -277,7 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── Edit Profile ───────────────────────────────────────
+  // Edit Profile
   void _showEditProfile(BuildContext ctx, AppTheme T) {
     final nameCtrl = TextEditingController(text: _displayName);
     final emailCtrl = TextEditingController(text: _displayEmail);
@@ -343,7 +343,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               T: T,
               keyboardType: TextInputType.phone,
             ),
-            // Info note about backend sync
             Container(
               padding: const EdgeInsets.all(10),
               margin: const EdgeInsets.only(bottom: 12),
@@ -382,7 +381,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : phoneCtrl.text.trim();
                 });
                 Navigator.pop(ctx);
-                // TODO: ApiService.updateProfile(name, email, phone)
               },
             ),
             const SizedBox(height: 20),
@@ -392,7 +390,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── Change Password ────────────────────────────────────
+  // Change Password
   void _showChangePassword(BuildContext ctx, AppTheme T) {
     final currentCtrl = TextEditingController();
     final newCtrl = TextEditingController();
@@ -514,7 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
-                  // TODO: ApiService.changePassword(current, newPass)
+                  // ApiService.changePassword(current, newPass)
                 },
               ),
               const SizedBox(height: 20),
@@ -525,7 +523,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── FAQ ────────────────────────────────────────────────
+  // FAQ
   void _showFAQ(BuildContext ctx, AppTheme T) {
     const faqs = [
       (
@@ -626,7 +624,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── Contact Support ────────────────────────────────────
+  // Contact Support
   void _showContactSupport(BuildContext ctx, AppTheme T) {
     const members = [
       ('Sayuri Gunarathne', '0701396964', '👩', 'Team Leader & UI/UX Designer'),
@@ -779,7 +777,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── Report a Problem ───────────────────────────────────
+  //Report a Problem
   void _showReportForm(BuildContext ctx, AppTheme T) {
     final ctrl = TextEditingController();
     showModalBottomSheet(
@@ -865,7 +863,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── Feedback ───────────────────────────────────────────
+  //Feedback
   void _showFeedbackForm(BuildContext ctx, AppTheme T) {
     int stars = 5;
     final ctrl = TextEditingController();
@@ -970,7 +968,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── Delete Account ────────────────────────────────────
+  // Delete Account
   void _confirmDelete(BuildContext ctx, AppTheme T) {
     showDialog(
       context: ctx,
@@ -1006,7 +1004,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// ── FAQ expandable item ────────────────────────────────────
+// FAQ expandable item
 class _FAQItem extends StatefulWidget {
   final String q, a;
   final AppTheme T;
@@ -1062,7 +1060,7 @@ class _FAQItemState extends State<_FAQItem> {
   }
 }
 
-// ── Shared widgets ─────────────────────────────────────────
+// Shared widgets
 class _SectionHeader extends StatelessWidget {
   final String title;
   final AppTheme T;
