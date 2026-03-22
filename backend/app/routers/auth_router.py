@@ -77,9 +77,11 @@ def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
     if otp.otp_code != data.otp_code:
         raise HTTPException(status_code=400, detail="Invalide OTP")
     
-    if not parent.is_verified:
-        parent.is_verified = True
-        db.commit()
+    # if not parent.is_verified:
+    #     parent.is_verified = True
+    #     db.commit()
+    parent.is_verified = True
+    db.commit()
 
     access_token = create_access_token(
         {"id": parent.id, "email": parent.email}
