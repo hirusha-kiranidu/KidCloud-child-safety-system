@@ -82,6 +82,7 @@ def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
     #     db.commit()
     parent.is_verified = True
     db.commit()
+    db.refresh(parent)
 
     access_token = create_access_token(
         {"id": parent.id, "email": parent.email}
