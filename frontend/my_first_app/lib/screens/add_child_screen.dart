@@ -29,7 +29,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
   final _device = TextEditingController();
   final _parent = TextEditingController();
   final _emerg = TextEditingController();
-  // ── NEW: teacher contact fields ──────────────────────────
+
   final _teacherName = TextEditingController();
   final _teacherPhone = TextEditingController();
 
@@ -121,7 +121,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
           ),
           const SizedBox(height: 20),
 
-          // ── Step 1: Avatar + Name + Gender ────────────
           if (_step == 1) ...[
             Center(
               child: Column(
@@ -261,8 +260,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
               onTap: () => setState(() => _step = 2),
               T: T,
             ),
-
-            // ── Step 2: School + Device ────────────────────
           ] else if (_step == 2) ...[
             KCInput(
               label: 'Age *',
@@ -291,8 +288,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
               onTap: () => setState(() => _step = 3),
               T: T,
             ),
-
-            // ── Step 3: Contacts (parent + teacher + emerg) ─
           ] else ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -331,7 +326,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
               T: T,
               keyboardType: TextInputType.phone,
             ),
-            // ── NEW teacher contact ──────────────────────
+
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
@@ -360,7 +355,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
               keyboardType: TextInputType.phone,
             ),
 
-            // Summary
             Container(
               padding: const EdgeInsets.all(14),
               margin: const EdgeInsets.only(bottom: 16, top: 4),
