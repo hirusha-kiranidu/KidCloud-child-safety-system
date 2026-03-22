@@ -23,9 +23,9 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _flash = false;
-  bool _emergency = false; // true = SOS pressed on wristband
-  int? _selectedChildId; // which child the SOS alert is for
   late Timer _timer;
+
+  Map<int, bool> _emergencies = {};
 
   @override
   void initState() {
@@ -41,6 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
+  bool get _anyEmergency => _emergencies.values.any((v) => v);
+
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
@@ -50,7 +52,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ───────────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -94,23 +95,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          _EmergencyAlertCard(
-            emergency: _emergency,
-            flash: _flash,
-            children: widget.children,
-            selectedChildId: _selectedChildId,
-            onSelectChild: (id) => setState(() => _selectedChildId = id),
-            onDismiss: () => setState(() => _emergency = false),
-            onTest: () => setState(() => _emergency = !_emergency),
-            T: T,
-          ),
+          if (!_anyEmergency)
+            _SOSSafeCard(
+              T: T,
+              onSimulate: () {
+                if (widget.children.isNotEmpty) {
+                  setState(() {
+                    final id = widget.children.first.id;
+                    _emergencies[id] = !(_emergencies[id] ?? false);
+                  });
+                }
+              },
+            )
+          else
+            Column(
+              children: widget.children
+                  .where((ch) => _emergencies[ch.id] == true)
+                  .map(
+                    (ch) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _SOSAlertCard(
+                        child: ch,
+                        flash: _flash,
+                        T: T,
+                        onDismiss: () =>
+                            setState(() => _emergencies[ch.id] = false),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
           const SizedBox(height: 12),
 
-          // ── Voice Detection (simplified, no premium/toggle) ──
           _VoiceDetectionCard(T: T),
           const SizedBox(height: 12),
 
-          // ── Live Location card only ───────────────────────
           GestureDetector(
             onTap: () => widget.go('map'),
             child: Container(
@@ -129,8 +148,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: T.cyan.withOpacity(0.13),
                       shape: BoxShape.circle,
                     ),
-                    child: Center(
-                      child: Text('📍', style: const TextStyle(fontSize: 22)),
+                    child: const Center(
+                      child: Text('📍', style: TextStyle(fontSize: 22)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -164,7 +183,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ── My Children ───────────────────────────────────
           Text(
             'MY CHILDREN',
             style: TextStyle(
@@ -175,17 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          ...widget.children.map(
-            (k) => GestureDetector(
-              onTap: () {
-                widget.setChild(k);
-                widget.go('tracking');
-              },
-              child: _ChildCard(child: k, T: T),
-            ),
-          ),
 
-          // ── Quick Actions ─────────────────────────────────
           const SizedBox(height: 6),
           Text(
             'QUICK ACTIONS',
@@ -227,7 +235,246 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ── Widgets ───────────────────────────────────────────────
+class _SOSSafeCard extends StatelessWidget {
+  final AppTheme T;
+  final VoidCallback onSimulate;
+  const _SOSSafeCard({required this.T, required this.onSimulate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: T.green.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: T.green.withOpacity(0.4), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: T.green.withOpacity(0.15),
+              border: Border.all(color: T.green, width: 2),
+            ),
+            child: const Center(
+              child: Text('🛡️', style: TextStyle(fontSize: 18)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SOS Alert',
+                  style: TextStyle(
+                    color: T.green,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  'No emergency detected · All clear',
+                  style: TextStyle(
+                    color: T.green.withOpacity(0.8),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onSimulate,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: T.green.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: T.green.withOpacity(0.4)),
+              ),
+              child: Text(
+                '✔ SAFE',
+                style: TextStyle(
+                  color: T.green,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SOSAlertCard extends StatelessWidget {
+  final ChildModel child;
+  final bool flash;
+  final AppTheme T;
+  final VoidCallback onDismiss;
+  const _SOSAlertCard({
+    required this.child,
+    required this.flash,
+    required this.T,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final T = this.T;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      decoration: BoxDecoration(
+        color: flash ? T.red.withOpacity(0.18) : T.red.withOpacity(0.09),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: flash ? T.red : T.red.withOpacity(0.5),
+          width: 2,
+        ),
+        boxShadow: flash
+            ? [
+                BoxShadow(
+                  color: T.red.withOpacity(0.25),
+                  blurRadius: 18,
+                  spreadRadius: 2,
+                ),
+              ]
+            : [],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Row(
+              children: [
+                // Child avatar (pulsing)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: flash ? T.red : T.red.withOpacity(0.25),
+                    border: Border.all(color: T.red, width: 2.5),
+                  ),
+                  child: Center(
+                    child: Text(
+                      child.avatar,
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SOS Alert — ${child.name}',
+                        style: TextStyle(
+                          color: T.red,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      Text(
+                        '${child.name} pressed the SOS button on wristband',
+                        style: TextStyle(
+                          color: T.red.withOpacity(0.75),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: flash ? T.red : Colors.transparent,
+                    border: Border.all(color: T.red, width: 2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onDismiss,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: T.red,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Mark as Resolved',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: T.red.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: T.red.withOpacity(0.4)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.phone_rounded, color: T.red, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Call 119',
+                          style: TextStyle(
+                            color: T.red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _ChildCard extends StatelessWidget {
   final ChildModel child;
@@ -282,11 +529,7 @@ class _ChildCard extends StatelessWidget {
                           ),
                           TextSpan(
                             text: ' · ${child.age}y',
-                            style: TextStyle(
-                              color: T.sub,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w400,
-                            ),
+                            style: TextStyle(color: T.sub, fontSize: 11),
                           ),
                         ],
                       ),
@@ -434,303 +677,6 @@ class _QuickActionBtn extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _EmergencyAlertCard extends StatelessWidget {
-  final bool emergency;
-  final bool flash;
-  final List<ChildModel> children;
-  final int? selectedChildId;
-  final Function(int) onSelectChild;
-  final VoidCallback onDismiss;
-  final VoidCallback onTest;
-  final AppTheme T;
-  const _EmergencyAlertCard({
-    required this.emergency,
-    required this.flash,
-    required this.children,
-    required this.selectedChildId,
-    required this.onSelectChild,
-    required this.onDismiss,
-    required this.onTest,
-    required this.T,
-  });
-
-  ChildModel? get _selected {
-    if (children.isEmpty) return null;
-    if (selectedChildId == null) return children.first;
-    return children.firstWhere(
-      (c) => c.id == selectedChildId,
-      orElse: () => children.first,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final T = this.T;
-    final child = _selected;
-    final childName = child?.name ?? 'Your Child';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: emergency
-            ? (flash ? T.red.withOpacity(0.18) : T.red.withOpacity(0.09))
-            : T.green.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: emergency
-              ? (flash ? T.red : T.red.withOpacity(0.5))
-              : T.green.withOpacity(0.4),
-          width: emergency ? 2 : 1.5,
-        ),
-        boxShadow: emergency && flash
-            ? [
-                BoxShadow(
-                  color: T.red.withOpacity(0.25),
-                  blurRadius: 18,
-                  spreadRadius: 2,
-                ),
-              ]
-            : [],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header: "SOS Alert" title + child selector ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-            child: Row(
-              children: [
-                // Icon
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: emergency
-                        ? (flash ? T.red : T.red.withOpacity(0.25))
-                        : T.green.withOpacity(0.15),
-                    border: Border.all(
-                      color: emergency ? T.red : T.green,
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      emergency ? '🆘' : '🛡️',
-                      style: TextStyle(fontSize: emergency && flash ? 20 : 18),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SOS Alert',
-                        style: TextStyle(
-                          color: emergency ? T.red : T.green,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      Text(
-                        emergency
-                            ? '$childName pressed the SOS button on wristband'
-                            : 'No emergency detected · All clear',
-                        style: TextStyle(
-                          color: emergency
-                              ? T.red.withOpacity(0.75)
-                              : T.green.withOpacity(0.8),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Demo toggle button
-                GestureDetector(
-                  onTap: onTest,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: emergency
-                          ? T.red.withOpacity(0.12)
-                          : T.green.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: emergency
-                            ? T.red.withOpacity(0.4)
-                            : T.green.withOpacity(0.4),
-                      ),
-                    ),
-                    child: Text(
-                      emergency ? '● ALERT' : '✔ SAFE',
-                      style: TextStyle(
-                        color: emergency ? T.red : T.green,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Child selector row ───────────────────────────
-          if (children.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.child_care_rounded,
-                    color: emergency
-                        ? T.red.withOpacity(0.6)
-                        : T.green.withOpacity(0.6),
-                    size: 14,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Select child:',
-                    style: TextStyle(
-                      color: T.sub,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: children.map((ch) {
-                          final isSel =
-                              (selectedChildId ?? children.first.id) == ch.id;
-                          final kc = Color(ch.colorHex);
-                          return GestureDetector(
-                            onTap: () => onSelectChild(ch.id),
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 6),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSel ? kc.withOpacity(0.15) : T.card2,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isSel ? kc : T.border,
-                                  width: isSel ? 1.5 : 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    ch.avatar,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    ch.name,
-                                    style: TextStyle(
-                                      color: isSel ? kc : T.sub,
-                                      fontSize: 11,
-                                      fontWeight: isSel
-                                          ? FontWeight.w700
-                                          : FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // ── Action buttons (only shown during emergency) ──
-          if (emergency)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: onDismiss,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: T.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline_rounded,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Mark as Resolved',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: T.red.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: T.red.withOpacity(0.4)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.phone_rounded, color: T.red, size: 16),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Call 119',
-                            style: TextStyle(
-                              color: T.red,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }
