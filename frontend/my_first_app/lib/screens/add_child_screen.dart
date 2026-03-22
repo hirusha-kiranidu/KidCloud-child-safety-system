@@ -28,6 +28,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
   final _age = TextEditingController();
   final _school = TextEditingController();
   final _device = TextEditingController();
+  final _parent = TextEditingController();
+  final _emerg = TextEditingController();
+  final _teacherName = TextEditingController();
+  final _teacherPhone = TextEditingController();
 
   final _avs = ['👧', '👦', '🧒', '👶', '🧑'];
   final _cols = [
@@ -45,6 +49,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
     _age.dispose();
     _school.dispose();
     _device.dispose();
+    _parent.dispose();
+    _emerg.dispose();
+    _teacherName.dispose();
+    _teacherPhone.dispose();
     super.dispose();
   }
 
@@ -245,30 +253,56 @@ class _AddChildScreenState extends State<AddChildScreen> {
             ),
           ] else ...[
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: T.card2,
+                color: T.blue.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: T.border),
+                border: Border.all(color: T.blue.withOpacity(0.25)),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  Text(
-                    'Step $_step Content',
-                    style: TextStyle(
-                      color: T.text,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  const Text('ℹ️', style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'These contacts will receive SOS alerts for this child.',
+                      style: TextStyle(color: T.sub, fontSize: 12, height: 1.6),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'This section will be implemented in upcoming commits.',
-                    style: TextStyle(color: T.sub, fontSize: 12),
-                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
+            ),
+            KCInput(
+              label: 'Parent Contact Number *',
+              placeholder: '+94 7X XXX XXXX',
+              icon: '📱',
+              controller: _parent,
+              T: T,
+              keyboardType: TextInputType.phone,
+            ),
+            KCInput(
+              label: 'Emergency Contact',
+              placeholder: '+94 7X XXX XXXX',
+              icon: '🚨',
+              controller: _emerg,
+              T: T,
+              keyboardType: TextInputType.phone,
+            ),
+            KCInput(
+              label: "Teacher's Full Name",
+              placeholder: 'e.g. Mrs. Silva',
+              icon: '🧑‍🏫',
+              controller: _teacherName,
+              T: T,
+            ),
+            KCInput(
+              label: "Teacher's Phone Number",
+              placeholder: '+94 7X XXX XXXX',
+              icon: '📞',
+              controller: _teacherPhone,
+              T: T,
+              keyboardType: TextInputType.phone,
             ),
           ],
 
