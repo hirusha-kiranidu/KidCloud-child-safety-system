@@ -26,6 +26,179 @@ class ManageChildScreen extends StatefulWidget {
 class _ManageChildScreenState extends State<ManageChildScreen> {
   int? _expandedId;
 
+  void _confirmDelete(BuildContext context, ChildModel child) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: widget.T.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Delete ${child.name}?',
+          style: TextStyle(color: widget.T.text, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'This will permanently remove ${child.name}\'s profile and all tracking data.',
+          style: TextStyle(color: widget.T.sub, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: widget.T.sub)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onDelete(child.id);
+              setState(() {
+                if (_expandedId == child.id) _expandedId = null;
+              });
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(
+                color: widget.T.red,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context, ChildModel child) {
+    final T = widget.T;
+    final nameCtrl = TextEditingController(text: child.name);
+    final ageCtrl = TextEditingController(text: child.age.toString());
+    final schoolCtrl = TextEditingController(text: child.school);
+    final deviceCtrl = TextEditingController(text: child.device);
+    final parentCtrl = TextEditingController(text: child.parentPhone);
+    final teacherNameCtrl = TextEditingController(text: child.teacherName);
+    final teacherPhoneCtrl = TextEditingController(text: child.teacherPhone);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: T.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: T.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Edit ${child.name}',
+                style: TextStyle(
+                  color: T.text,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              KCInput(
+                label: 'Full Name',
+                placeholder: 'Child name',
+                icon: '👤',
+                controller: nameCtrl,
+                T: T,
+              ),
+              KCInput(
+                label: 'Age',
+                placeholder: 'Age',
+                icon: '🔢',
+                controller: ageCtrl,
+                T: T,
+                keyboardType: TextInputType.number,
+              ),
+              KCInput(
+                label: 'School',
+                placeholder: 'School name',
+                icon: '🏫',
+                controller: schoolCtrl,
+                T: T,
+              ),
+              KCInput(
+                label: 'Device ID',
+                placeholder: 'e.g. KC-A2F3',
+                icon: '⌚',
+                controller: deviceCtrl,
+                T: T,
+              ),
+              KCInput(
+                label: 'Parent Phone',
+                placeholder: '+60 1X...',
+                icon: '📱',
+                controller: parentCtrl,
+                T: T,
+                keyboardType: TextInputType.phone,
+              ),
+              KCInput(
+                label: 'Teacher Name',
+                placeholder: "Teacher's name",
+                icon: '🧑‍🏫',
+                controller: teacherNameCtrl,
+                T: T,
+              ),
+              KCInput(
+                label: 'Teacher Phone',
+                placeholder: '+60 1X...',
+                icon: '📞',
+                controller: teacherPhoneCtrl,
+                T: T,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 8),
+              PrimaryBtn(
+                label: '💾 Save Changes',
+                T: T,
+                onTap: () {
+                  final updated = child.copyWith(
+                    name: nameCtrl.text.trim().isEmpty
+                        ? null
+                        : nameCtrl.text.trim(),
+                    age: int.tryParse(ageCtrl.text.trim()),
+                    school: schoolCtrl.text.trim().isEmpty
+                        ? null
+                        : schoolCtrl.text.trim(),
+                    device: deviceCtrl.text.trim().isEmpty
+                        ? null
+                        : deviceCtrl.text.trim(),
+                    parentPhone: parentCtrl.text.trim(),
+                    teacherName: teacherNameCtrl.text.trim(),
+                    teacherPhone: teacherPhoneCtrl.text.trim(),
+                  );
+                  widget.onEdit(updated);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
@@ -197,7 +370,7 @@ class _ManageChildScreenState extends State<ManageChildScreen> {
                               ),
                               const SizedBox(width: 6),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () => _showEditSheet(context, child),
                                 child: Container(
                                   width: 34,
                                   height: 34,
@@ -219,7 +392,7 @@ class _ManageChildScreenState extends State<ManageChildScreen> {
                               ),
                               const SizedBox(width: 6),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () => _confirmDelete(context, child),
                                 child: Container(
                                   width: 34,
                                   height: 34,
