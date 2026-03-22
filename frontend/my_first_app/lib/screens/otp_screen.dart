@@ -16,7 +16,7 @@ const Color kRed = Color(0xFFFF3E5E);
 class OtpScreen extends StatefulWidget {
   final Function(String) go;
   final String phoneNumber;
-  // AppTheme optional — falls back to hardcoded colors if not provided
+
   const OtpScreen({
     super.key,
     required this.go,
@@ -34,7 +34,6 @@ class _OtpScreenState extends State<OtpScreen> {
   );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
-  // ── 5 minutes = 300 seconds ─────────────────────────────
   static const int _totalSeconds = 300;
   int _secondsLeft = _totalSeconds;
   late Timer _timer;
@@ -59,7 +58,6 @@ class _OtpScreenState extends State<OtpScreen> {
     super.dispose();
   }
 
-  // ── Start / restart 5-min countdown ────────────────────
   void _startTimer() {
     _secondsLeft = _totalSeconds;
     _canResend = false;
@@ -74,17 +72,14 @@ class _OtpScreenState extends State<OtpScreen> {
     });
   }
 
-  // ── mm:ss display ───────────────────────────────────────
   String get _timerDisplay {
     final m = _secondsLeft ~/ 60;
     final s = _secondsLeft % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  // ── 0.0–1.0 progress for ring ──────────────────────────
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
-  // ── Resend ──────────────────────────────────────────────
   void _resendOtp() {
     if (!_canResend) return;
     for (final c in _controllers) c.clear();
@@ -95,12 +90,10 @@ class _OtpScreenState extends State<OtpScreen> {
     });
     _timer.cancel();
     _startTimer();
-    // TODO: call your resend OTP API here
   }
 
   String get _otpCode => _controllers.map((c) => c.text).join();
 
-  // ── Verify ──────────────────────────────────────────────
   void _verifyOtp() async {
     if (_otpCode.length < 6) {
       setState(() {
@@ -114,7 +107,6 @@ class _OtpScreenState extends State<OtpScreen> {
       _isError = false;
     });
 
-    // TODO: Replace with real OTP verification API call
     await Future.delayed(const Duration(seconds: 2));
 
     if (_otpCode == '123456') {
@@ -199,7 +191,6 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Turn red when under 60 seconds left
     final urgentColor = (_secondsLeft < 60 && !_canResend) ? kRed : kCyan;
 
     return Scaffold(
@@ -210,7 +201,6 @@ class _OtpScreenState extends State<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Back + title ───────────────────────
               Row(
                 children: [
                   GestureDetector(
@@ -252,7 +242,6 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 36),
 
-              // ── Shield icon ────────────────────────
               Center(
                 child: Container(
                   width: 90,
@@ -279,7 +268,6 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ── Title ─────────────────────────────
               const Center(
                 child: Text(
                   'OTP Verification',
@@ -315,9 +303,6 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 28),
 
-              // ══════════════════════════════════════
-              //  5-MINUTE COUNTDOWN  (ring + mm:ss)
-              // ══════════════════════════════════════
               Center(
                 child: Column(
                   children: [
@@ -370,14 +355,12 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 28),
 
-              // ── OTP boxes ─────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (i) => _buildOtpBox(i)),
               ),
               const SizedBox(height: 16),
 
-              // ── Error / success msg ───────────────
               if (_isError)
                 Center(
                   child: Row(
@@ -420,7 +403,6 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               const SizedBox(height: 28),
 
-              // ── Verify button ─────────────────────
               GestureDetector(
                 onTap: _isVerifying ? null : _verifyOtp,
                 child: AnimatedContainer(
@@ -468,7 +450,6 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ── Resend section ────────────────────
               Center(
                 child: Column(
                   children: [
@@ -522,7 +503,6 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 32),
 
-              // ── Security note ─────────────────────
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
