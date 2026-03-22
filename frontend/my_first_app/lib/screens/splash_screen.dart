@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen>
     _ctrl.forward();
     Future.delayed(const Duration(milliseconds: 10000), () {
       if (mounted) widget.go('onboard0');
-    });  
+    });
   }
 
   @override
