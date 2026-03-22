@@ -3,12 +3,14 @@ import '../theme/app_theme.dart';
 import '../models.dart';
 import '../widgets/shared_widgets.dart';
 
+// ════════════════════════════════════════════════════════
 //  NOTIFICATIONS SCREEN
-//  - Gets the current list of children from main.dart
-//  - showing filter options based on the registered children.
-//  - Notifications fetch from an API
-//  - Displays an empty state when there are no notifications yet
-
+//  - Receives live `children` list from main.dart
+//  - Filter chips built dynamically from registered children
+//  - No hardcoded child names (Emma, Liam removed)
+//  - Notifications will come from API; empty state shown
+//    when no real notifications exist yet
+// ════════════════════════════════════════════════════════
 class NotifsScreen extends StatefulWidget {
   final Function(String) go;
   final List<ChildModel> children; // live list from main.dart
@@ -27,7 +29,19 @@ class NotifsScreen extends StatefulWidget {
 class _NotifsScreenState extends State<NotifsScreen> {
   String _filter = 'All';
 
-  final List<Map<String, dynamic>> _notifs = [];
+  // ── Notifications come from the backend via API ──────
+  // These are empty by default; will be populated from
+  // ApiService.fetchAlerts() in production.
+  // The structure matches what FastAPI returns:
+  // { id, icon, title, desc, time, urgent, colorHex, childName }
+  final List<Map<String, dynamic>> _notifs = [
+    // TODO: remove this placeholder and load from ApiService.fetchAlerts()
+    // Example of what a real notification looks like:
+    // {'id': 1, 'icon': '📍', 'title': 'Left Safe Zone',
+    //  'desc': 'Your child left the School safe zone',
+    //  'time': '5m ago', 'urgent': true,
+    //  'colorHex': 0xFFFF7D3E, 'childName': 'Your Child Name'},
+  ];
 
   // ── Filter chips: All + Urgent + one per registered child ──
   List<String> get _filterOptions {
@@ -305,8 +319,11 @@ class _EmptyNotifs extends StatelessWidget {
   }
 }
 
+// ════════════════════════════════════════════════════════
 //  ALERT HISTORY SCREEN
-
+//  - Also uses live children names in filter chips
+//  - History loaded from API (empty until backend connected)
+// ════════════════════════════════════════════════════════
 class AlertHistoryScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -319,9 +336,8 @@ class AlertHistoryScreen extends StatefulWidget {
 class _AlertHistoryScreenState extends State<AlertHistoryScreen> {
   String _filter = 'This Week';
 
-  // from ApiService.fetchAlertHistory() ──
+  // ── Will be populated from ApiService.fetchAlertHistory() ──
   // Empty until backend is connected
-
   final List<Map<String, dynamic>> _history = [];
 
   int get _total =>
