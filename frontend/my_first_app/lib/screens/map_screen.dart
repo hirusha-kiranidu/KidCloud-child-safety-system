@@ -9,7 +9,7 @@ import '../widgets/shared_widgets.dart';
 class MapScreen extends StatefulWidget {
   final ChildModel? activeChild;
   final List<ChildModel> children;
-  final List<ZoneModel> zones; // added for filtering
+  final List<ZoneModel> zones;
   final Function(String) go;
   final AppTheme T;
 
@@ -29,7 +29,6 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
 
-  // ── Selected child ───────────────────────────────
   late ChildModel? _selected;
 
   static const LatLng _kDefaultPos = LatLng(7.2906, 80.6337);
@@ -85,7 +84,6 @@ class _MapScreenState extends State<MapScreen> {
     _mapController?.animateCamera(CameraUpdate.newLatLng(newPos));
   }
 
-  // ── Switch child ─────────────────────────────────
   void _switchChild(ChildModel child) {
     setState(() {
       _selected = child;
@@ -96,23 +94,78 @@ class _MapScreenState extends State<MapScreen> {
     _startPolling();
   }
 
-  // ── Marker ───────────────────────────────────────
-  Set<Marker> get _markers {
-    if (_selected == null) return {};
+  // ── Get zone position ─────────────────────────────
+  LatLng _posForZone(ZoneModel z) {
+    if (z.lat != null && z.lng != null) {
+      return LatLng(z.lat!, z.lng!);
+    }
+    return _childPosition;
+  }
 
-    return {
-      Marker(
-        markerId: const MarkerId('child'),
-        position: _childPosition,
-        infoWindow: InfoWindow(
-          title: _selected!.name,
-          snippet: _selected!.status,
+  // ── Markers ───────────────────────────────────────
+  Set<Marker> get _markers {
+    final markers = <Marker>{};
+
+    // Child marker
+    if (_selected != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('child'),
+          position: _childPosition,
+          infoWindow: InfoWindow(
+            title: _selected!.name,
+            snippet: _selected!.status,
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            HSLColor.fromColor(Color(_selected!.colorHex)).hue,
+          ),
         ),
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-          HSLColor.fromColor(Color(_selected!.colorHex)).hue,
+      );
+    }
+
+    // Zone markers
+    for (int i = 0; i < _myZones.length; i++) {
+      final z = _myZones[i];
+      final pos = _posForZone(z);
+
+      markers.add(
+        Marker(
+          markerId: MarkerId('zone_$i'),
+          position: pos,
+          infoWindow: InfoWindow(
+            title: z.name,
+            snippet: '${z.start} → ${z.end}',
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
         ),
-      ),
-    };
+      );
+    }
+
+    return markers;
+  }
+
+  // ── Circles (Safe zones) ──────────────────────────
+  Set<Circle> get _circles {
+    final circles = <Circle>{};
+
+    for (int i = 0; i < _myZones.length; i++) {
+      final z = _myZones[i];
+      final pos = _posForZone(z);
+      final color = Color(z.colorHex);
+
+      circles.add(
+        Circle(
+          circleId: CircleId('zone_$i'),
+          center: pos,
+          radius: z.radius.toDouble(),
+          fillColor: color.withOpacity(0.2),
+          strokeColor: color,
+          strokeWidth: 2,
+        ),
+      );
+    }
+
+    return circles;
   }
 
   @override
@@ -155,13 +208,12 @@ class _MapScreenState extends State<MapScreen> {
 
     return Column(
       children: [
-        // ── Top bar with child selector ──────────────
+        // ── Top bar (same as commit 2) ───────────────
         Container(
           color: T.surface,
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Row(
             children: [
-              // Back button
               GestureDetector(
                 onTap: () => widget.go('dashboard'),
                 child: Container(
@@ -179,10 +231,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(width: 10),
-
-              // Child list (horizontal)
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -210,7 +259,6 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ),
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(child.avatar),
                               const SizedBox(width: 5),
@@ -232,7 +280,6 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
 
-              // LIVE indicator
               if (_locationLoaded)
                 Container(
                   margin: const EdgeInsets.only(left: 8),
@@ -245,27 +292,13 @@ class _MapScreenState extends State<MapScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: T.green.withOpacity(0.4)),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: T.green,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'LIVE',
-                        style: TextStyle(
-                          color: T.green,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
+                  child: const Text(
+                    'LIVE',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
             ],
@@ -289,6 +322,7 @@ class _MapScreenState extends State<MapScreen> {
               }
             },
             markers: _markers,
+            circles: _circles, // 🔥 NEW
             zoomControlsEnabled: false,
             compassEnabled: true,
           ),
