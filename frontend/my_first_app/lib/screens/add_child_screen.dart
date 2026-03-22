@@ -8,7 +8,6 @@ class AddChildScreen extends StatefulWidget {
   final Function(String) go;
   final Function(Map) onAdd;
   final AppTheme T;
-
   const AddChildScreen({
     super.key,
     required this.go,
@@ -22,16 +21,15 @@ class AddChildScreen extends StatefulWidget {
 
 class _AddChildScreenState extends State<AddChildScreen> {
   int _step = 1;
-
   String _avatar = '👧', _gender = 'Girl';
   int _colorHex = 0xFF00E5C8;
-
   final _name = TextEditingController();
   final _age = TextEditingController();
   final _school = TextEditingController();
   final _device = TextEditingController();
   final _parent = TextEditingController();
   final _emerg = TextEditingController();
+  // ── NEW: teacher contact fields ──────────────────────────
   final _teacherName = TextEditingController();
   final _teacherPhone = TextEditingController();
 
@@ -61,7 +59,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: Column(
@@ -69,16 +66,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
           KCTopBar(
             title: 'Add Child Profile',
             sub: 'Step $_step of 3',
-            onBack: () {
-              if (_step == 1) {
-                widget.go('dashboard');
-              } else {
-                setState(() => _step--);
-              }
-            },
+            onBack: () =>
+                _step == 1 ? widget.go('dashboard') : setState(() => _step--),
             T: T,
           ),
-          const SizedBox(height: 20),
+          // Step indicator
           Row(
             children: List.generate(3, (i) {
               final active = i == _step - 1;
@@ -129,6 +121,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
           ),
           const SizedBox(height: 20),
 
+          // ── Step 1: Avatar + Name + Gender ────────────
           if (_step == 1) ...[
             Center(
               child: Column(
@@ -216,6 +209,15 @@ class _AddChildScreenState extends State<AddChildScreen> {
               controller: _name,
               T: T,
             ),
+            Text(
+              'GENDER',
+              style: TextStyle(
+                color: T.sub,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               children: ['Girl', 'Boy', 'Other']
@@ -259,6 +261,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
               onTap: () => setState(() => _step = 2),
               T: T,
             ),
+
+            // ── Step 2: School + Device ────────────────────
           ] else if (_step == 2) ...[
             KCInput(
               label: 'Age *',
@@ -287,6 +291,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
               onTap: () => setState(() => _step = 3),
               T: T,
             ),
+
+            // ── Step 3: Contacts (parent + teacher + emerg) ─
           ] else ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -325,6 +331,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
               T: T,
               keyboardType: TextInputType.phone,
             ),
+            // ── NEW teacher contact ──────────────────────
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
@@ -352,6 +359,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
               T: T,
               keyboardType: TextInputType.phone,
             ),
+
+            // Summary
             Container(
               padding: const EdgeInsets.all(14),
               margin: const EdgeInsets.only(bottom: 16, top: 4),
