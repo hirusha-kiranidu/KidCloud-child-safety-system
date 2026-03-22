@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../models.dart';
 import '../widgets/shared_widgets.dart';
 
+
 class SafeZoneScreen extends StatefulWidget {
   final Function(String) go;
   final List<ChildModel> children;
@@ -84,7 +85,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
       active:   true,
       inZone:   true,
     );
-    widget.onAddZone(zone);   // lifts to main.dart → shared with map
+    widget.onAddZone(zone);   
     setState(() {
       _adding = false;
       _nameCtrl.clear(); _startCtrl.clear(); _endCtrl.clear();
@@ -120,14 +121,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
             sub: ch != null ? "${ch.name}'s zones (${_myZones.length})" : 'No children',
             onBack: () => _adding ? setState(() => _adding = false) : widget.go('dashboard'),
             T: T,
-            rightEl: (!_adding && ch != null) ? GestureDetector(
-              onTap: () => setState(() => _adding = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                decoration: BoxDecoration(color: T.cyan.withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: T.cyan)),
-                child: Text('+ Add Zone', style: TextStyle(color: T.cyan, fontSize: 12, fontWeight: FontWeight.w700)),
-              ),
-            ) : null,
+            rightEl: null,  
           ),
 
           if (ch == null) ...[
@@ -143,7 +137,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
             ])),
           ] else ...[
 
-            // ── Child selector ───────────────────────────
+            
             if (widget.children.length > 1) ...[
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -175,7 +169,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
               const SizedBox(height: 14),
             ],
 
-            // ── Add zone form ────────────────────────────
+            
             if (_adding)
               _AddZoneForm(
                 T: T, childName: ch.name,
@@ -188,8 +182,26 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
                 onCancel: () => setState(() => _adding = false),
               ),
 
-            // ── Empty state ──────────────────────────────
-            if (_myZones.isEmpty && !_adding)
+            
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: T.cyan.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: T.cyan.withOpacity(0.2)),
+              ),
+              child: Row(children: [
+                Icon(Icons.info_outline_rounded, color: T.cyan, size: 16),
+                const SizedBox(width: 10),
+                Expanded(child: Text(
+                  'Add safe zones from the Map screen using the location input at the top.',
+                  style: TextStyle(color: T.sub, fontSize: 12, height: 1.4),
+                )),
+              ]),
+            ),
+
+            if (_myZones.isEmpty)
               Container(
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(color: T.card, borderRadius: BorderRadius.circular(18), border: Border.all(color: T.border)),
@@ -202,9 +214,9 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
                 ]),
               )
 
-            // ── Zone cards ───────────────────────────────
+            
             else if (_myZones.isNotEmpty) ...[
-              // Info banner showing zones appear on map
+              
               Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -228,7 +240,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
         ]),
       ),
 
-      // ── Alert popup ──────────────────────────────────────
+     
       if (_showAlert)
         Positioned(
           top: 12, left: 16, right: 16,
@@ -257,7 +269,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
   }
 }
 
-// ── Zone card ──────────────────────────────────────────────
+
 class _ZoneCard extends StatelessWidget {
   final ZoneModel zone;
   final AppTheme T;
@@ -345,7 +357,7 @@ class _PointTile extends StatelessWidget {
   }
 }
 
-// ── Add zone form ──────────────────────────────────────────
+
 class _AddZoneForm extends StatelessWidget {
   final AppTheme T;
   final String childName;
