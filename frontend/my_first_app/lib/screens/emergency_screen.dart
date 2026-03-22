@@ -21,12 +21,12 @@ class EmergencyScreen extends StatefulWidget {
 
 class _EmergencyScreenState extends State<EmergencyScreen> {
   bool _adding = false;
+  final List<Map<String, String>> _custom = [];
 
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
 
-    // Children that have a teacher assigned
     final childrenWithTeacher = widget.children
         .where((c) => c.teacherName.isNotEmpty)
         .toList();
@@ -35,7 +35,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: Column(
         children: [
-          // Top bar
           KCTopBar(
             title: 'Emergency Contacts',
             sub: 'SOS alert recipients',
@@ -65,8 +64,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Info banner
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             margin: const EdgeInsets.only(bottom: 16),
@@ -88,8 +85,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               ],
             ),
           ),
-
-          // Police Emergency
           Text(
             'EMERGENCY SERVICES',
             style: TextStyle(
@@ -110,15 +105,25 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             T: T,
           ),
           const SizedBox(height: 16),
-
-          // ── Children Teacher Contacts ──────────────────
+          if (_adding) ...[
+            _CustomContactForm(
+              T: T,
+              onSave: (c) {
+                setState(() {
+                  _custom.add(c);
+                  _adding = false;
+                });
+              },
+              onCancel: () => setState(() => _adding = false),
+            ),
+            const SizedBox(height: 8),
+          ],
           if (childrenWithTeacher.isNotEmpty) ...[
             ...childrenWithTeacher.map((child) {
               final childColor = Color(child.colorHex);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Section header with avatar and name
                   Row(
                     children: [
                       Container(
@@ -165,7 +170,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               );
             }),
           ] else if (widget.children.isNotEmpty) ...[
-            // Fallback UI if children exist but no teacher info
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -223,18 +227,42 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
             const SizedBox(height: 16),
           ],
+          if (_custom.isNotEmpty) ...[
+            Text(
+              'OTHER CONTACTS',
+              style: TextStyle(
+                color: T.sub,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ..._custom.map(
+              (c) => _EmergencyContactCard(
+                avatar: '👤',
+                name: c['name'] ?? '',
+                role: c['rel'] ?? '',
+                phone: c['phone'] ?? '',
+                color: T.cyan,
+                pinned: false,
+                T: T,
+                onDelete: () => setState(() => _custom.remove(c)),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-// ── Emergency contact card ───────────────────────
 class _EmergencyContactCard extends StatelessWidget {
   final String avatar, name, role, phone;
   final Color color;
   final bool pinned;
   final AppTheme T;
+  final VoidCallback? onDelete;
 
   const _EmergencyContactCard({
     required this.avatar,
@@ -244,6 +272,7 @@ class _EmergencyContactCard extends StatelessWidget {
     required this.color,
     required this.pinned,
     required this.T,
+    this.onDelete,
   });
 
   @override
@@ -308,6 +337,131 @@ class _EmergencyContactCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          if (onDelete != null)
+            GestureDetector(
+              onTap: onDelete,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: T.red.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: T.red.withOpacity(0.27)),
+                ),
+                child: Center(
+                  child: Icon(Icons.delete_outline, color: T.red, size: 14),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomContactForm extends StatefulWidget {
+  final AppTheme T;
+  final Function(Map<String, String>) onSave;
+  final VoidCallback onCancel;
+
+  const _CustomContactForm({
+    required this.T,
+    required this.onSave,
+    required this.onCancel,
+  });
+
+  @override
+  State<_CustomContactForm> createState() => _CustomContactFormState();
+}
+
+class _CustomContactFormState extends State<_CustomContactForm> {
+  final _name = TextEditingController();
+  final _rel = TextEditingController();
+  final _phone = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _rel.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final T = widget.T;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: T.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: T.red.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '➕ New Contact',
+            style: TextStyle(
+              color: T.red,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          KCInput(
+            label: 'Full Name',
+            placeholder: 'Contact name',
+            icon: '👤',
+            controller: _name,
+            T: T,
+          ),
+          KCInput(
+            label: 'Relationship',
+            placeholder: 'e.g. Uncle, Doctor',
+            icon: '🔗',
+            controller: _rel,
+            T: T,
+          ),
+          KCInput(
+            label: 'Phone Number',
+            placeholder: '+94 7X XXX XXXX',
+            icon: '📱',
+            controller: _phone,
+            T: T,
+            keyboardType: TextInputType.phone,
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryBtn(
+                  label: 'Save',
+                  onTap: () {
+                    if (_name.text.isNotEmpty && _phone.text.isNotEmpty) {
+                      widget.onSave({
+                        'name': _name.text,
+                        'rel': _rel.text,
+                        'phone': _phone.text,
+                      });
+                    }
+                  },
+                  T: T,
+                  danger: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: PrimaryBtn(
+                  label: 'Cancel',
+                  onTap: widget.onCancel,
+                  T: T,
+                  ghost: true,
+                ),
+              ),
+            ],
           ),
         ],
       ),
