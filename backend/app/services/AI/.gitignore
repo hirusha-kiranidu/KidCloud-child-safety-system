@@ -1,19 +1,22 @@
-# Python virtual environments
-venv/
-env/
+# Virtual environment
 ai_env/
 
 # Python cache
 __pycache__/
 *.pyc
 
-# VS Code
-.vscode/
-
-# large AI models
-*.pt
-*.h5
-*.pb
-
-# audio files
+# Audio files
 *.wav
+
+# Models (optional)
+*.pkl
+
+# Large datasets
+dataset/
+ESC-50-master/
+audio_samples/
+test_sounds/
+
+# OS files
+.DS_Store
+Thumbs.db
