@@ -9,6 +9,7 @@ import '../widgets/shared_widgets.dart';
 class MapScreen extends StatefulWidget {
   final ChildModel? activeChild;
   final List<ChildModel> children;
+  final List<ZoneModel> zones; // added for filtering
   final Function(String) go;
   final AppTheme T;
 
@@ -16,6 +17,7 @@ class MapScreen extends StatefulWidget {
     super.key,
     this.activeChild,
     required this.children,
+    required this.zones,
     required this.go,
     required this.T,
   });
@@ -25,21 +27,22 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // ── Map controller ───────────────────────────────
   GoogleMapController? _mapController;
 
   // ── Selected child ───────────────────────────────
   late ChildModel? _selected;
 
-  // ── Default position (Kandy) ─────────────────────
   static const LatLng _kDefaultPos = LatLng(7.2906, 80.6337);
 
-  // ── Child live position ──────────────────────────
   LatLng _childPosition = _kDefaultPos;
   bool _locationLoaded = false;
 
-  // ── Polling timer ────────────────────────────────
   Timer? _locationTimer;
+
+  // ── Filter zones for selected child ──────────────
+  List<ZoneModel> get _myZones => _selected == null
+      ? []
+      : widget.zones.where((z) => z.childId == _selected!.id).toList();
 
   @override
   void initState() {
@@ -57,7 +60,7 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  // ── Start polling every 5 seconds ────────────────
+  // ── Polling ──────────────────────────────────────
   void _startPolling() {
     _fetchLocation();
     _locationTimer = Timer.periodic(
@@ -66,7 +69,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // ── Fetch child location from backend ────────────
   Future<void> _fetchLocation() async {
     if (_selected == null) return;
 
@@ -80,11 +82,21 @@ class _MapScreenState extends State<MapScreen> {
       _locationLoaded = true;
     });
 
-    // Smooth camera movement
     _mapController?.animateCamera(CameraUpdate.newLatLng(newPos));
   }
 
-  // ── Marker for child ─────────────────────────────
+  // ── Switch child ─────────────────────────────────
+  void _switchChild(ChildModel child) {
+    setState(() {
+      _selected = child;
+      _locationLoaded = false;
+      _childPosition = _kDefaultPos;
+    });
+
+    _startPolling();
+  }
+
+  // ── Marker ───────────────────────────────────────
   Set<Marker> get _markers {
     if (_selected == null) return {};
 
@@ -95,6 +107,9 @@ class _MapScreenState extends State<MapScreen> {
         infoWindow: InfoWindow(
           title: _selected!.name,
           snippet: _selected!.status,
+        ),
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          HSLColor.fromColor(Color(_selected!.colorHex)).hue,
         ),
       ),
     };
@@ -136,22 +151,149 @@ class _MapScreenState extends State<MapScreen> {
       );
     }
 
-    return GoogleMap(
-      initialCameraPosition: CameraPosition(target: _childPosition, zoom: 14.0),
-      mapType: MapType.normal,
-      onMapCreated: (controller) {
-        _mapController = controller;
+    final c = _selected ?? widget.children.first;
 
-        if (_locationLoaded) {
-          controller.animateCamera(
-            CameraUpdate.newLatLngZoom(_childPosition, 14),
-          );
-        }
-      },
-      markers: _markers,
-      myLocationEnabled: false,
-      zoomControlsEnabled: false,
-      compassEnabled: true,
+    return Column(
+      children: [
+        // ── Top bar with child selector ──────────────
+        Container(
+          color: T.surface,
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Row(
+            children: [
+              // Back button
+              GestureDetector(
+                onTap: () => widget.go('dashboard'),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: T.card2,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: T.border),
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: T.text,
+                    size: 15,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              // Child list (horizontal)
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: widget.children.map((child) {
+                      final isSelected = child.id == c.id;
+                      final color = Color(child.colorHex);
+
+                      return GestureDetector(
+                        onTap: () => _switchChild(child),
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? color.withOpacity(0.15)
+                                : T.card2,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? color : T.border,
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(child.avatar),
+                              const SizedBox(width: 5),
+                              Text(
+                                child.name,
+                                style: TextStyle(
+                                  color: isSelected ? color : T.text,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+
+              // LIVE indicator
+              if (_locationLoaded)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: T.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: T.green.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: T.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'LIVE',
+                        style: TextStyle(
+                          color: T.green,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        // ── Map ──────────────────────────────────────
+        Expanded(
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: _childPosition,
+              zoom: 14,
+            ),
+            onMapCreated: (controller) {
+              _mapController = controller;
+
+              if (_locationLoaded) {
+                controller.animateCamera(
+                  CameraUpdate.newLatLngZoom(_childPosition, 14),
+                );
+              }
+            },
+            markers: _markers,
+            zoomControlsEnabled: false,
+            compassEnabled: true,
+          ),
+        ),
+      ],
     );
   }
 }
