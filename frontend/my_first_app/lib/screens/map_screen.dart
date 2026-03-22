@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 import '../models.dart';
 import '../theme/app_theme.dart';
 import '../services/location_service.dart';
@@ -10,7 +12,7 @@ class MapScreen extends StatefulWidget {
   final ChildModel? activeChild;
   final List<ChildModel> children;
   final List<ZoneModel> zones;
-  final Function(ZoneModel) onAddZone; // NEW
+  final Function(ZoneModel) onAddZone;
   final Function(String) go;
   final AppTheme T;
 
@@ -43,9 +45,11 @@ class _MapScreenState extends State<MapScreen> {
   // ── Safe zone inputs ─────────────────────────────
   final _startCtrl = TextEditingController();
   final _endCtrl = TextEditingController();
-  bool _startFocus = false;
-  bool _endFocus = false;
   bool _zoneSaved = false;
+
+  // ── Places API ───────────────────────────────────
+  List<Map<String, dynamic>> _placeSuggestions = [];
+  Timer? _debounce;
 
   // ── Filter zones ────────────────────────────────
   List<ZoneModel> get _myZones => _selected == null
@@ -67,6 +71,7 @@ class _MapScreenState extends State<MapScreen> {
     _mapController?.dispose();
     _startCtrl.dispose();
     _endCtrl.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -106,12 +111,78 @@ class _MapScreenState extends State<MapScreen> {
     _startPolling();
   }
 
-  // ── Save zone logic ─────────────────────────────
-  void _saveZone() {
-    if (_startCtrl.text.trim().isEmpty ||
-        _endCtrl.text.trim().isEmpty ||
-        _selected == null)
+  // ════════════════════════════════════════════════
+  //  GOOGLE PLACES API
+  // ════════════════════════════════════════════════
+
+  Future<void> _fetchPlaceSuggestions(String input) async {
+    if (input.isEmpty) {
+      setState(() => _placeSuggestions = []);
       return;
+    }
+
+    try {
+      final uri = Uri.https(
+        'maps.googleapis.com',
+        '/maps/api/place/autocomplete/json',
+        {
+          'input': input,
+          'components': 'country:lk',
+          'key': 'YOUR_API_KEY_HERE',
+        },
+      );
+
+      final res = await http.get(uri);
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+
+        if (data['status'] == 'OK') {
+          setState(() {
+            _placeSuggestions = List<Map<String, dynamic>>.from(
+              data['predictions'],
+            );
+          });
+        }
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _selectPlace(Map<String, dynamic> place) async {
+    final placeId = place['place_id'];
+
+    final uri = Uri.https(
+      'maps.googleapis.com',
+      '/maps/api/place/details/json',
+      {'place_id': placeId, 'fields': 'geometry', 'key': 'YOUR_API_KEY_HERE'},
+    );
+
+    final res = await http.get(uri);
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      final loc = data['result']['geometry']['location'];
+
+      final LatLng selectedPos = LatLng(loc['lat'], loc['lng']);
+
+      setState(() {
+        _childPosition = selectedPos; // temp move
+        _placeSuggestions = [];
+      });
+
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(selectedPos, 14),
+      );
+    }
+  }
+
+  // ── Save zone ───────────────────────────────────
+  void _saveZone() {
+    if (_startCtrl.text.isEmpty || _endCtrl.text.isEmpty) return;
+    if (_selected == null) return;
 
     final c = _selected!;
 
@@ -119,7 +190,7 @@ class _MapScreenState extends State<MapScreen> {
       ZoneModel(
         id: DateTime.now().millisecondsSinceEpoch,
         childId: c.id,
-        name: _startCtrl.text.split(',').first,
+        name: _startCtrl.text,
         icon: '📍',
         start: _startCtrl.text,
         end: _endCtrl.text,
@@ -132,126 +203,61 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
 
-    _startCtrl.clear();
-    _endCtrl.clear();
-
     setState(() => _zoneSaved = true);
-
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _zoneSaved = false);
-    });
-  }
-
-  // ── Zone position ───────────────────────────────
-  LatLng _posForZone(ZoneModel z) {
-    if (z.lat != null && z.lng != null) {
-      return LatLng(z.lat!, z.lng!);
-    }
-    return _childPosition;
   }
 
   // ── Markers ─────────────────────────────────────
-  Set<Marker> get _markers {
-    final markers = <Marker>{};
-
-    if (_selected != null) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId('child'),
-          position: _childPosition,
-          infoWindow: InfoWindow(
-            title: _selected!.name,
-            snippet: _selected!.status,
-          ),
-        ),
-      );
-    }
-
-    for (int i = 0; i < _myZones.length; i++) {
-      final z = _myZones[i];
-      markers.add(
-        Marker(
-          markerId: MarkerId('zone_$i'),
-          position: _posForZone(z),
-          infoWindow: InfoWindow(title: z.name),
-        ),
-      );
-    }
-
-    return markers;
-  }
+  Set<Marker> get _markers => {
+    Marker(markerId: const MarkerId('child'), position: _childPosition),
+  };
 
   // ── Circles ─────────────────────────────────────
-  Set<Circle> get _circles {
-    final circles = <Circle>{};
-
-    for (int i = 0; i < _myZones.length; i++) {
-      final z = _myZones[i];
-      final color = Color(z.colorHex);
-
-      circles.add(
-        Circle(
-          circleId: CircleId('zone_$i'),
-          center: _posForZone(z),
-          radius: z.radius.toDouble(),
-          fillColor: color.withOpacity(0.2),
-          strokeColor: color,
-          strokeWidth: 2,
-        ),
-      );
-    }
-
-    return circles;
-  }
+  Set<Circle> get _circles => _myZones.map((z) {
+    return Circle(
+      circleId: CircleId('${z.id}'),
+      center: LatLng(z.lat!, z.lng!),
+      radius: z.radius.toDouble(),
+      fillColor: Colors.blue.withOpacity(0.2),
+      strokeColor: Colors.blue,
+    );
+  }).toSet();
 
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
 
-    final c = _selected ?? widget.children.first;
-
     return Column(
       children: [
-        // ── Safe zone input UI ──────────────────────
-        Container(
+        // ── Input + autocomplete ────────────────────
+        Padding(
           padding: const EdgeInsets.all(12),
-          color: T.surface,
           child: Column(
             children: [
-              // Start input
               TextField(
                 controller: _startCtrl,
-                onTap: () => setState(() {
-                  _startFocus = true;
-                  _endFocus = false;
-                }),
-                decoration: const InputDecoration(hintText: 'Safe zone start'),
+                onChanged: (value) {
+                  _debounce?.cancel();
+                  _debounce = Timer(
+                    const Duration(milliseconds: 400),
+                    () => _fetchPlaceSuggestions(value),
+                  );
+                },
+                decoration: const InputDecoration(hintText: 'Search location'),
               ),
 
-              const SizedBox(height: 6),
-
-              // End input
-              TextField(
-                controller: _endCtrl,
-                onTap: () => setState(() {
-                  _endFocus = true;
-                  _startFocus = false;
-                }),
-                decoration: const InputDecoration(hintText: 'Safe zone end'),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Save button or message
-              _zoneSaved
-                  ? const Text(
-                      '✅ Zone saved successfully',
-                      style: TextStyle(color: Colors.green),
-                    )
-                  : ElevatedButton(
-                      onPressed: _saveZone,
-                      child: Text('Save Safe Zone for ${c.name}'),
-                    ),
+              // Dropdown
+              if (_placeSuggestions.isNotEmpty)
+                Container(
+                  height: 150,
+                  child: ListView(
+                    children: _placeSuggestions.map((p) {
+                      return ListTile(
+                        title: Text(p['description']),
+                        onTap: () => _selectPlace(p),
+                      );
+                    }).toList(),
+                  ),
+                ),
             ],
           ),
         ),
