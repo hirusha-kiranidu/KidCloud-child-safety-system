@@ -3,17 +3,11 @@ import '../theme/app_theme.dart';
 import '../models.dart';
 import '../widgets/shared_widgets.dart';
 
-// ════════════════════════════════════════════════════════
 //  NOTIFICATIONS SCREEN
-//  - Receives live `children` list from main.dart
-//  - Filter chips built dynamically from registered children
-//  - No hardcoded child names (Emma, Liam removed)
-//  - Notifications will come from API; empty state shown
-//    when no real notifications exist yet
-// ════════════════════════════════════════════════════════
+
 class NotifsScreen extends StatefulWidget {
   final Function(String) go;
-  final List<ChildModel> children; // live list from main.dart
+  final List<ChildModel> children;
   final AppTheme T;
   const NotifsScreen({
     super.key,
@@ -29,21 +23,9 @@ class NotifsScreen extends StatefulWidget {
 class _NotifsScreenState extends State<NotifsScreen> {
   String _filter = 'All';
 
-  // ── Notifications come from the backend via API ──────
-  // These are empty by default; will be populated from
-  // ApiService.fetchAlerts() in production.
-  // The structure matches what FastAPI returns:
-  // { id, icon, title, desc, time, urgent, colorHex, childName }
-  final List<Map<String, dynamic>> _notifs = [
-    // TODO: remove this placeholder and load from ApiService.fetchAlerts()
-    // Example of what a real notification looks like:
-    // {'id': 1, 'icon': '📍', 'title': 'Left Safe Zone',
-    //  'desc': 'Your child left the School safe zone',
-    //  'time': '5m ago', 'urgent': true,
-    //  'colorHex': 0xFFFF7D3E, 'childName': 'Your Child Name'},
-  ];
+  final List<Map<String, dynamic>> _notifs = [];
 
-  // ── Filter chips: All + Urgent + one per registered child ──
+  // Filter chips: All + Urgent + one per registered child
   List<String> get _filterOptions {
     final names = widget.children.map((c) => c.name).toList();
     return ['All', 'Urgent', ...names];
@@ -156,7 +138,7 @@ class _NotifsScreenState extends State<NotifsScreen> {
             ),
           const SizedBox(height: 14),
 
-          // ── Notification list or empty state ──────────
+          // Notification list or empty state
           if (_notifs.isEmpty)
             _EmptyNotifs(children: widget.children, go: widget.go, T: T)
           else if (_filtered.isEmpty)
@@ -265,7 +247,7 @@ class _NotifsScreenState extends State<NotifsScreen> {
   }
 }
 
-// ── Empty state ────────────────────────────────────────────
+// Empty state
 class _EmptyNotifs extends StatelessWidget {
   final List<ChildModel> children;
   final Function(String) go;
@@ -319,11 +301,6 @@ class _EmptyNotifs extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════
-//  ALERT HISTORY SCREEN
-//  - Also uses live children names in filter chips
-//  - History loaded from API (empty until backend connected)
-// ════════════════════════════════════════════════════════
 class AlertHistoryScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -433,7 +410,7 @@ class _AlertHistoryScreenState extends State<AlertHistoryScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ── Empty state ────────────────────────────
+          // Empty state
           if (_history.isEmpty)
             Container(
               padding: const EdgeInsets.all(28),
