@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
+import '../models.dart';
 
 class AddChildScreen extends StatefulWidget {
   final Function(String) go;
@@ -79,30 +81,53 @@ class _AddChildScreenState extends State<AddChildScreen> {
           const SizedBox(height: 20),
           Row(
             children: List.generate(3, (i) {
-              final isActive = i == _step - 1;
+              final active = i == _step - 1;
+              final done = i < _step - 1;
               return Expanded(
-                child: Container(
-                  height: 30,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    color: isActive ? T.cyan : T.card2,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: T.border),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${i + 1}',
-                      style: TextStyle(
-                        color: isActive ? Colors.black : T.sub,
-                        fontWeight: FontWeight.w600,
+                child: Row(
+                  children: [
+                    if (i > 0)
+                      Expanded(
+                        child: Container(
+                          height: 2.5,
+                          color: i <= _step - 1 ? T.cyan : T.border,
+                        ),
+                      ),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: done || active ? T.cyan : T.card2,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: done || active ? T.cyan : T.border,
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          done ? '✓' : '${i + 1}',
+                          style: TextStyle(
+                            color: done || active ? Colors.black : T.sub,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (i < 2)
+                      Expanded(
+                        child: Container(
+                          height: 2.5,
+                          color: i < _step - 1 ? T.cyan : T.border,
+                        ),
+                      ),
+                  ],
                 ),
               );
             }),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
 
           if (_step == 1) ...[
             Center(
@@ -228,6 +253,12 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   )
                   .toList(),
             ),
+            const SizedBox(height: 16),
+            PrimaryBtn(
+              label: 'Continue →',
+              onTap: () => setState(() => _step = 2),
+              T: T,
+            ),
           ] else if (_step == 2) ...[
             KCInput(
               label: 'Age *',
@@ -249,6 +280,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
               placeholder: 'e.g. KC-A2F3',
               icon: '⌚',
               controller: _device,
+              T: T,
+            ),
+            PrimaryBtn(
+              label: 'Continue →',
+              onTap: () => setState(() => _step = 3),
               T: T,
             ),
           ] else ...[
@@ -289,6 +325,18 @@ class _AddChildScreenState extends State<AddChildScreen> {
               T: T,
               keyboardType: TextInputType.phone,
             ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                'TEACHER CONTACT',
+                style: TextStyle(
+                  color: T.sub,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
             KCInput(
               label: "Teacher's Full Name",
               placeholder: 'e.g. Mrs. Silva',
@@ -304,20 +352,84 @@ class _AddChildScreenState extends State<AddChildScreen> {
               T: T,
               keyboardType: TextInputType.phone,
             ),
-          ],
-
-          const SizedBox(height: 20),
-
-          ElevatedButton(
-            onPressed: () {
-              if (_step < 3) {
-                setState(() => _step++);
-              } else {
+            Container(
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 16, top: 4),
+              decoration: BoxDecoration(
+                color: T.card2,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: T.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SUMMARY',
+                    style: TextStyle(
+                      color: T.sub,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final row in [
+                    ['👤', 'Name', _name.text.isEmpty ? '—' : _name.text],
+                    ['🔢', 'Age', _age.text.isEmpty ? '—' : _age.text],
+                    ['🏫', 'School', _school.text.isEmpty ? '—' : _school.text],
+                    [
+                      '⌚',
+                      'Device',
+                      _device.text.isEmpty ? 'Not linked' : _device.text,
+                    ],
+                    [
+                      '🧑‍🏫',
+                      'Teacher',
+                      _teacherName.text.isEmpty ? '—' : _teacherName.text,
+                    ],
+                  ]) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${row[0]} ${row[1]}',
+                          style: TextStyle(color: T.sub, fontSize: 12),
+                        ),
+                        Text(
+                          row[2],
+                          style: TextStyle(
+                            color: T.text,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Divider(height: 10, color: T.border),
+                  ],
+                ],
+              ),
+            ),
+            PrimaryBtn(
+              label: '✅ Save Child Profile',
+              T: T,
+              onTap: () {
+                widget.onAdd({
+                  'name': _name.text.isEmpty ? 'New Child' : _name.text,
+                  'age': int.tryParse(_age.text) ?? 8,
+                  'avatar': _avatar,
+                  'colorHex': _colorHex,
+                  'school': _school.text.isEmpty ? '—' : _school.text,
+                  'device': _device.text.isEmpty ? '—' : _device.text,
+                  'teacherName': _teacherName.text.trim(),
+                  'teacherPhone': _teacherPhone.text.trim(),
+                  'parentPhone': _parent.text.trim(),
+                  'gender': _gender,
+                });
                 widget.go('dashboard');
-              }
-            },
-            child: Text(_step < 3 ? 'Next →' : 'Finish'),
-          ),
+              },
+            ),
+          ],
         ],
       ),
     );
