@@ -42,16 +42,19 @@ class _MapScreenState extends State<MapScreen> {
 
   Timer? _locationTimer;
 
-  // ── Safe zone inputs ─────────────────────────────
-  final _startCtrl = TextEditingController();
-  final _endCtrl = TextEditingController();
-  bool _zoneSaved = false;
+  // ── Destination ────────────────────────────────
+  LatLng? _destinationPos;
+  String _destinationName = '';
 
-  // ── Places API ───────────────────────────────────
+  // ── Places ────────────────────────────────────
   List<Map<String, dynamic>> _placeSuggestions = [];
   Timer? _debounce;
 
-  // ── Filter zones ────────────────────────────────
+  // ── Inputs ────────────────────────────────────
+  final _startCtrl = TextEditingController();
+  final _endCtrl = TextEditingController();
+
+  // ── Zones ─────────────────────────────────────
   List<ZoneModel> get _myZones => _selected == null
       ? []
       : widget.zones.where((z) => z.childId == _selected!.id).toList();
@@ -75,7 +78,7 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  // ── Polling ─────────────────────────────────────
+  // ── Polling ────────────────────────────────────
   void _startPolling() {
     _fetchLocation();
     _locationTimer = Timer.periodic(
@@ -103,16 +106,15 @@ class _MapScreenState extends State<MapScreen> {
   void _switchChild(ChildModel child) {
     setState(() {
       _selected = child;
-      _locationLoaded = false;
       _childPosition = _kDefaultPos;
-      _zoneSaved = false;
+      _destinationPos = null;
     });
 
     _startPolling();
   }
 
   // ════════════════════════════════════════════════
-  //  GOOGLE PLACES API
+  //  GOOGLE PLACES
   // ════════════════════════════════════════════════
 
   Future<void> _fetchPlaceSuggestions(String input) async {
@@ -121,131 +123,123 @@ class _MapScreenState extends State<MapScreen> {
       return;
     }
 
-    try {
-      final uri = Uri.https(
-        'maps.googleapis.com',
-        '/maps/api/place/autocomplete/json',
-        {
-          'input': input,
-          'components': 'country:lk',
-          'key': 'YOUR_API_KEY_HERE',
-        },
-      );
-
-      final res = await http.get(uri);
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-
-        if (data['status'] == 'OK') {
-          setState(() {
-            _placeSuggestions = List<Map<String, dynamic>>.from(
-              data['predictions'],
-            );
-          });
-        }
-      }
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  Future<void> _selectPlace(Map<String, dynamic> place) async {
-    final placeId = place['place_id'];
-
     final uri = Uri.https(
       'maps.googleapis.com',
-      '/maps/api/place/details/json',
-      {'place_id': placeId, 'fields': 'geometry', 'key': 'YOUR_API_KEY_HERE'},
+      '/maps/api/place/autocomplete/json',
+      {'input': input, 'components': 'country:lk', 'key': 'YOUR_API_KEY'},
     );
 
     final res = await http.get(uri);
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
+      if (data['status'] == 'OK') {
+        setState(() {
+          _placeSuggestions = List.from(data['predictions']);
+        });
+      }
+    }
+  }
 
+  Future<void> _selectPlace(Map<String, dynamic> place) async {
+    final placeId = place['place_id'];
+    final description = place['description'];
+
+    final uri = Uri.https(
+      'maps.googleapis.com',
+      '/maps/api/place/details/json',
+      {'place_id': placeId, 'fields': 'geometry', 'key': 'YOUR_API_KEY'},
+    );
+
+    final res = await http.get(uri);
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
       final loc = data['result']['geometry']['location'];
 
-      final LatLng selectedPos = LatLng(loc['lat'], loc['lng']);
+      final dest = LatLng(loc['lat'], loc['lng']);
 
       setState(() {
-        _childPosition = selectedPos; // temp move
+        _destinationPos = dest;
+        _destinationName = description;
         _placeSuggestions = [];
       });
 
+      // 🔥 Fit both child + destination
       _mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(selectedPos, 14),
+        CameraUpdate.newLatLngBounds(
+          LatLngBounds(
+            southwest: LatLng(
+              (_childPosition.latitude < dest.latitude
+                      ? _childPosition.latitude
+                      : dest.latitude) -
+                  0.02,
+              (_childPosition.longitude < dest.longitude
+                      ? _childPosition.longitude
+                      : dest.longitude) -
+                  0.02,
+            ),
+            northeast: LatLng(
+              (_childPosition.latitude > dest.latitude
+                      ? _childPosition.latitude
+                      : dest.latitude) +
+                  0.02,
+              (_childPosition.longitude > dest.longitude
+                      ? _childPosition.longitude
+                      : dest.longitude) +
+                  0.02,
+            ),
+          ),
+          80,
+        ),
       );
     }
   }
 
-  // ── Save zone ───────────────────────────────────
-  void _saveZone() {
-    if (_startCtrl.text.isEmpty || _endCtrl.text.isEmpty) return;
-    if (_selected == null) return;
-
-    final c = _selected!;
-
-    widget.onAddZone(
-      ZoneModel(
-        id: DateTime.now().millisecondsSinceEpoch,
-        childId: c.id,
-        name: _startCtrl.text,
-        icon: '📍',
-        start: _startCtrl.text,
-        end: _endCtrl.text,
-        radius: 500,
-        colorHex: c.colorHex,
-        lat: _childPosition.latitude,
-        lng: _childPosition.longitude,
-        active: true,
-        inZone: true,
-      ),
-    );
-
-    setState(() => _zoneSaved = true);
-  }
-
   // ── Markers ─────────────────────────────────────
-  Set<Marker> get _markers => {
-    Marker(markerId: const MarkerId('child'), position: _childPosition),
-  };
+  Set<Marker> get _markers {
+    final markers = <Marker>{};
 
-  // ── Circles ─────────────────────────────────────
-  Set<Circle> get _circles => _myZones.map((z) {
-    return Circle(
-      circleId: CircleId('${z.id}'),
-      center: LatLng(z.lat!, z.lng!),
-      radius: z.radius.toDouble(),
-      fillColor: Colors.blue.withOpacity(0.2),
-      strokeColor: Colors.blue,
+    markers.add(
+      Marker(markerId: const MarkerId('child'), position: _childPosition),
     );
-  }).toSet();
+
+    if (_destinationPos != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('destination'),
+          position: _destinationPos!,
+          infoWindow: InfoWindow(title: _destinationName),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        ),
+      );
+    }
+
+    return markers;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final T = widget.T;
-
     return Column(
       children: [
-        // ── Input + autocomplete ────────────────────
+        // ── Search box ──────────────────────────────
         Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             children: [
               TextField(
-                controller: _startCtrl,
-                onChanged: (value) {
+                onChanged: (v) {
                   _debounce?.cancel();
                   _debounce = Timer(
                     const Duration(milliseconds: 400),
-                    () => _fetchPlaceSuggestions(value),
+                    () => _fetchPlaceSuggestions(v),
                   );
                 },
-                decoration: const InputDecoration(hintText: 'Search location'),
+                decoration: const InputDecoration(
+                  hintText: 'Search destination',
+                ),
               ),
 
-              // Dropdown
               if (_placeSuggestions.isNotEmpty)
                 Container(
                   height: 150,
@@ -273,7 +267,6 @@ class _MapScreenState extends State<MapScreen> {
               _mapController = controller;
             },
             markers: _markers,
-            circles: _circles,
           ),
         ),
       ],
