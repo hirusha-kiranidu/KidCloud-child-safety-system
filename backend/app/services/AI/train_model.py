@@ -1,61 +1,87 @@
-import pandas as pd
-import librosa
-import numpy as np
 import os
-from tqdm import tqdm
+import numpy as np
+import librosa
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-import pickle
+from sklearn.preprocessing import LabelEncoder
 
-# Load metadata
-metadata = pd.read_csv("dataset/UrbanSound8K/metadata/UrbanSound8K.csv")
+DATASET_PATH = "dataset"
 
 features = []
 labels = []
 
 def extract_features(file_path):
     audio, sample_rate = librosa.load(file_path, res_type='kaiser_fast')
-    mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=40)
-    mfcc_scaled = np.mean(mfcc.T, axis=0)
+    
+    mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=60)
+    mfcc_scaled = np.hstack([
+    np.mean(mfcc, axis=1),
+    np.std(mfcc, axis=1)
+    ])
+    
     return mfcc_scaled
 
-print("Extracting features from dataset...")
+print(" Loading dataset...")
 
-for index, row in tqdm(metadata.iterrows(), total=len(metadata)):
+for label in os.listdir(DATASET_PATH):
     
-    file_path = os.path.join(
-        "dataset/UrbanSound8K/audio/fold" + str(row["fold"]),
-        row["slice_file_name"]
-    )
+    folder_path = os.path.join(DATASET_PATH, label)
 
-    data = extract_features(file_path)
+    if os.path.isdir(folder_path):
+        for file in os.listdir(folder_path):
+            if file.endswith(".wav"):
+                file_path = os.path.join(folder_path, file)
+                
+                try:
+                    data = extract_features(file_path)
+                    features.append(data)
+                    labels.append(label)
+                except:
+                    print("Error processing:", file_path)
 
-    features.append(data)
-    labels.append(row["class"])
+print("Dataset loaded!")
 
 X = np.array(features)
 y = np.array(labels)
 
-print("Splitting dataset...")
+# Encode labels
+encoder = LabelEncoder()
+y_encoded = encoder.fit_transform(y)
 
+# Split dataset
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X, y_encoded, test_size=0.2, random_state=42
 )
 
+print(" Training model...")
 
-print("Training model...")
-
-model = RandomForestClassifier(n_estimators=100)
+model = RandomForestClassifier(n_estimators=200, max_depth=20, class_weight="balanced")
 model.fit(X_train, y_train)
 
 accuracy = model.score(X_test, y_test)
 
-print("Model Accuracy:", accuracy)
+print(" Model trained!")
+print(" Accuracy:", accuracy)
 
-# Save model
+# Save model + encoder
 os.makedirs("models", exist_ok=True)
 
-with open("models/sound_model.pkl", "wb") as f:
-    pickle.dump(model, f)
+pickle.dump(model, open("models/sound_model.pkl", "wb"))
+pickle.dump(encoder, open("models/label_encoder.pkl", "wb"))
 
-print("Model saved to models/sound_model.pkl")
+print(" Model saved in models/")
+
+
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Predict on test data
+y_pred = model.predict(X_test)
+
+print("\n===== MODEL EVALUATION =====")
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
