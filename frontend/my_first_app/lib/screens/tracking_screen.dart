@@ -1,13 +1,47 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../theme/app_theme.dart';
 import '../models.dart';
 import '../widgets/shared_widgets.dart';
+
+// ── Sri Lanka city suggestions ─────────────────────────
+// Stored as simple string + lat/lng pairs (no google_maps package needed)
+const _kCities = [
+  ('Colombo', 6.9271, 79.8612),
+  ('Kandy', 7.2906, 80.6337),
+  ('Galle', 6.0535, 80.2210),
+  ('Negombo', 7.2081, 79.8358),
+  ('Jaffna', 9.6615, 80.0255),
+  ('Trincomalee', 8.5874, 81.2152),
+  ('Batticaloa', 7.7170, 81.6924),
+  ('Anuradhapura', 8.3114, 80.4037),
+  ('Polonnaruwa', 7.9403, 81.0188),
+  ('Badulla', 6.9934, 81.0550),
+  ('Kurunegala', 7.4863, 80.3647),
+  ('Ratnapura', 6.6828, 80.3992),
+  ('Matara', 5.9549, 80.5550),
+  ('Hambantota', 6.1249, 81.1185),
+  ('Nuwara Eliya', 6.9497, 80.7891),
+  ('Dambulla', 7.8731, 80.6517),
+  ('Puttalam', 8.0362, 79.8283),
+  ('Kalutara', 6.5854, 79.9607),
+  ('Moratuwa', 6.7730, 79.8820),
+  ('Kotte', 6.8996, 79.9009),
+  ('Vavuniya', 8.7514, 80.4971),
+  ('Mannar', 8.9800, 79.9047),
+  ('Matale', 7.4675, 80.6234),
+  ('Panadura', 6.7137, 79.9070),
+  ('Kalmunai', 7.4148, 81.8268),
+];
 
 class TrackingScreen extends StatefulWidget {
   final ChildModel? child;
   final List<ChildModel> children;
   final List<ZoneModel> zones;
-  final Function(ZoneModel) onAddZone; // saves zone to main.dart
+  final Function(ZoneModel) onAddZone;
   final Function(String) go;
   final AppTheme T;
   const TrackingScreen({
@@ -26,17 +60,28 @@ class TrackingScreen extends StatefulWidget {
 
 class _TrackingScreenState extends State<TrackingScreen> {
   late ChildModel? _selected;
-  final _searchCtrl = TextEditingController();
-  bool _searchActive = false;
-  bool _showRoute = false;
+
+  // ── Google Maps ──────────────────────────────────
+  GoogleMapController? _mapController;
+  // Default position: Kandy, Sri Lanka
+  // TODO: Replace with ApiService.fetchChildLocation(childId) from backend
+  static const _kDefaultPos = LatLng(7.2906, 80.6337);
+  LatLng _childPosition = _kDefaultPos;
+
   final _startCtrl = TextEditingController();
   final _endCtrl = TextEditingController();
+  bool _startFocus = false;
+  bool _endFocus = false;
   bool _routeSaved = false;
 
-  // Zones for currently selected child
   List<ZoneModel> get _myZones => _selected == null
       ? []
       : widget.zones.where((z) => z.childId == _selected!.id).toList();
+
+  List<Map<String, dynamic>> _placeSuggestions = [];
+  double? _selectedStartLat;
+  double? _selectedStartLng;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -48,10 +93,136 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   @override
   void dispose() {
-    _searchCtrl.dispose();
     _startCtrl.dispose();
     _endCtrl.dispose();
+    _mapController?.dispose();
     super.dispose();
+  }
+
+  void _saveZone() {
+    if (_startCtrl.text.trim().isEmpty || _endCtrl.text.trim().isEmpty) return;
+    final c = _selected;
+    if (c == null) return;
+    final zone = ZoneModel(
+      id: DateTime.now().millisecondsSinceEpoch,
+      childId: c.id,
+      name: _startCtrl.text.split(',').first.trim(),
+      icon: '📍',
+      start: _startCtrl.text.trim(),
+      end: _endCtrl.text.trim(),
+      radius: 500,
+      colorHex: c.colorHex,
+      lat: _selectedStartLat,
+      lng: _selectedStartLng,
+      active: true,
+      inZone: true,
+    );
+    widget.onAddZone(zone);
+    _startCtrl.clear();
+    _endCtrl.clear();
+
+    if (_selectedStartLat != null && _selectedStartLng != null) {
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(_selectedStartLat!, _selectedStartLng!),
+          13,
+        ),
+      );
+    } else {
+      final startName = zone.start.toLowerCase();
+      for (final city in _kCities) {
+        if (city.$1.toLowerCase().contains(startName) ||
+            startName.contains(city.$1.toLowerCase())) {
+          _mapController?.animateCamera(
+            CameraUpdate.newLatLngZoom(LatLng(city.$2, city.$3), 13),
+          );
+          break;
+        }
+      }
+    }
+
+    setState(() {
+      _routeSaved = true;
+      _startFocus = false;
+      _endFocus = false;
+      _selectedStartLat = null;
+      _selectedStartLng = null;
+    });
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _routeSaved = false);
+    });
+  }
+
+  // Uses the Places Autocomplete API to get suggestions.
+  Future<void> _fetchPlaceSuggestions(String input) async {
+    if (input.isEmpty) {
+      setState(() => _placeSuggestions = []);
+      return;
+    }
+    try {
+      final uri = Uri.https(
+        'maps.googleapis.com',
+        '/maps/api/place/autocomplete/json',
+        {
+          'input': input,
+          'components': 'country:lk',
+          'language': 'en',
+          'key': 'AIzaSyDciOgl_Tz7PvEeC-GbQOtI3h52BDKqKwE',
+        },
+      );
+      final res = await http.get(uri).timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['status'] == 'OK') {
+          final predictions = (data['predictions'] as List)
+              .cast<Map<String, dynamic>>();
+          if (mounted) {
+            setState(() => _placeSuggestions = predictions.take(5).toList());
+          }
+        }
+      }
+    } catch (e) {
+      print('[TrackingScreen] Places autocomplete error: $e');
+    }
+  }
+
+  // Geocode a place_id to get its LatLng.
+  Future<void> _selectPlace(Map<String, dynamic> prediction) async {
+    final placeId = prediction['place_id'] as String;
+    final description = prediction['description'] as String;
+
+    try {
+      final uri =
+          Uri.https('maps.googleapis.com', '/maps/api/place/details/json', {
+            'place_id': placeId,
+            'fields': 'geometry',
+            'key': 'AIzaSyDciOgl_Tz7PvEeC-GbQOtI3h52BDKqKwE',
+          });
+      final res = await http.get(uri).timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['status'] == 'OK') {
+          final loc = data['result']['geometry']['location'];
+          final dest = LatLng(
+            (loc['lat'] as num).toDouble(),
+            (loc['lng'] as num).toDouble(),
+          );
+          setState(() {
+            if (_startFocus) {
+              _startCtrl.text = description;
+              _selectedStartLat = dest.latitude;
+              _selectedStartLng = dest.longitude;
+            } else if (_endFocus) {
+              _endCtrl.text = description;
+            }
+            _placeSuggestions = [];
+          });
+          FocusScope.of(context).unfocus();
+        }
+      }
+    } catch (e) {
+      print('[TrackingScreen] Place details error: $e');
+    }
   }
 
   @override
@@ -101,102 +272,334 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     return Column(
       children: [
-        // ─ select child
+        // ══════════════════════════════════════════════════
+        //  TOP PANEL — Uber-style location input
+        // ══════════════════════════════════════════════════
         Container(
           color: T.surface,
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          child: Row(
+          child: Column(
             children: [
-              GestureDetector(
-                onTap: () => widget.go('dashboard'),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: T.card2,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: T.border),
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: T.text,
-                    size: 15,
-                  ),
+              // ── Back + Child picker ──────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => widget.go('dashboard'),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: T.card2,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: T.border),
+                        ),
+                        child: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: T.text,
+                          size: 15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: widget.children.asMap().entries.map((e) {
+                            final k = e.value;
+                            final kc = Color(k.colorHex);
+                            final sel = k.id == c.id;
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selected = k;
+                                  _routeSaved = false;
+                                });
+                                _mapController?.animateCamera(
+                                  CameraUpdate.newLatLngZoom(
+                                    _childPosition,
+                                    13,
+                                  ),
+                                );
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin: EdgeInsets.only(
+                                  right: e.key < widget.children.length - 1
+                                      ? 8
+                                      : 0,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: sel ? kc.withOpacity(0.15) : T.card2,
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                    color: sel ? kc : T.border,
+                                    width: sel ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      k.avatar,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      k.name,
+                                      style: TextStyle(
+                                        color: sel ? kc : T.text,
+                                        fontSize: 12,
+                                        fontWeight: sel
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: widget.children.asMap().entries.map((e) {
-                      final k = e.value;
-                      final kc = Color(k.colorHex);
-                      final sel = k.id == c.id;
-                      return GestureDetector(
-                        onTap: () => setState(() {
-                          _selected = k;
-                          _routeSaved = false;
-                        }),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: EdgeInsets.only(
-                            right: e.key < widget.children.length - 1 ? 8 : 0,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: sel ? kc.withOpacity(0.15) : T.card2,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: sel ? kc : T.border,
-                              width: sel ? 1.5 : 1,
+
+              // ── Route input card (Uber style) ─────────────
+              Container(
+                margin: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                decoration: BoxDecoration(
+                  color: T.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _startFocus || _endFocus ? color : T.border,
+                    width: _startFocus || _endFocus ? 1.5 : 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Starting point row
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: T.green,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                k.avatar,
-                                style: const TextStyle(fontSize: 15),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Focus(
+                              onFocusChange: (f) => setState(() {
+                                _startFocus = f;
+                                if (f) _endFocus = false;
+                              }),
+                              child: TextField(
+                                controller: _startCtrl,
+                                onChanged: (v) {
+                                  _debounce?.cancel();
+                                  _debounce = Timer(
+                                    const Duration(milliseconds: 350),
+                                    () => _fetchPlaceSuggestions(v),
+                                  );
+                                },
+                                style: TextStyle(color: T.text, fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText: 'Starting point',
+                                  hintStyle: TextStyle(
+                                    color: T.muted,
+                                    fontSize: 13,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
                               ),
-                              const SizedBox(width: 6),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    k.name,
-                                    style: TextStyle(
-                                      color: sel ? kc : T.text,
-                                      fontSize: 12,
-                                      fontWeight: sel
-                                          ? FontWeight.w700
-                                          : FontWeight.w500,
+                            ),
+                          ),
+                          if (_startCtrl.text.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                _startCtrl.clear();
+                                setState(() {});
+                              },
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: T.muted,
+                                size: 16,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Dotted connector
+                    Padding(
+                      padding: const EdgeInsets.only(left: 25),
+                      child: Column(
+                        children: List.generate(
+                          3,
+                          (_) => Container(
+                            width: 2,
+                            height: 4,
+                            margin: const EdgeInsets.symmetric(vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: T.border,
+                              borderRadius: BorderRadius.circular(1),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Ending point row
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: T.red,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Focus(
+                              onFocusChange: (f) => setState(() {
+                                _endFocus = f;
+                                if (f) _startFocus = false;
+                              }),
+                              child: TextField(
+                                controller: _endCtrl,
+                                onChanged: (v) {
+                                  _debounce?.cancel();
+                                  _debounce = Timer(
+                                    const Duration(milliseconds: 350),
+                                    () => _fetchPlaceSuggestions(v),
+                                  );
+                                },
+                                style: TextStyle(color: T.text, fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText: 'Where to?',
+                                  hintStyle: TextStyle(
+                                    color: T.muted,
+                                    fontSize: 13,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_endCtrl.text.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                _endCtrl.clear();
+                                setState(() {});
+                              },
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: T.muted,
+                                size: 16,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Suggestions dropdown ──────────────────────
+              if (_placeSuggestions.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(
+                    color: T.card,
+                    border: Border(
+                      left: BorderSide(color: T.border),
+                      right: BorderSide(color: T.border),
+                      bottom: BorderSide(color: T.border),
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(14),
+                    ),
+                  ),
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    children: _placeSuggestions.map((p) {
+                      final main =
+                          (p['structured_formatting']?['main_text'] ??
+                                  p['description'])
+                              as String;
+                      final sub =
+                          (p['structured_formatting']?['secondary_text'] ?? '')
+                              as String;
+                      return InkWell(
+                        onTap: () => _selectPlace(p),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                color: T.sub,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      main,
+                                      style: TextStyle(
+                                        color: T.text,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 5,
-                                        height: 5,
-                                        decoration: BoxDecoration(
-                                          color: k.online ? T.green : T.muted,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 3),
+                                    if (sub.isNotEmpty)
                                       Text(
-                                        k.online ? 'Online' : 'Offline',
+                                        sub,
                                         style: TextStyle(
-                                          color: k.online ? T.green : T.muted,
-                                          fontSize: 9,
+                                          color: T.sub,
+                                          fontSize: 11,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -205,1045 +608,335 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     }).toList(),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
 
-        // ─Full map
-        Expanded(
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: CustomPaint(
-                    key: ValueKey(
-                      'map_${c.id}_${_myZones.length}_${_myZones.map((z) => z.id).join('_')}',
-                    ),
-                    painter: _SriLankaMap(
-                      childColor: color,
-                      childName: c.name,
-                      childAvatar: c.avatar,
-                      zones: _myZones,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Search bar
-              Positioned(
-                top: 12,
-                left: 12,
-                right: 12,
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    _searchActive = true;
-                    _showRoute = false;
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 11,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _searchActive
-                          ? Colors.white
-                          : Colors.black.withOpacity(0.65),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _searchActive
-                            ? color
-                            : Colors.white.withOpacity(0.18),
-                        width: _searchActive ? 1.5 : 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.search_rounded,
-                          color: _searchActive ? color : Colors.white70,
-                          size: 19,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _searchActive
-                              ? TextField(
-                                  controller: _searchCtrl,
-                                  autofocus: true,
-                                  style: const TextStyle(
-                                    color: Color(0xFF0A1628),
-                                    fontSize: 14,
-                                  ),
-                                  decoration: const InputDecoration(
-                                    hintText: 'Search location in Sri Lanka…',
-                                    hintStyle: TextStyle(
-                                      color: Colors.black38,
-                                      fontSize: 13,
-                                    ),
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                  onSubmitted: (_) =>
-                                      setState(() => _searchActive = false),
-                                )
-                              : Text(
-                                  _searchCtrl.text.isEmpty
-                                      ? 'Search location…'
-                                      : _searchCtrl.text,
-                                  style: TextStyle(
-                                    color: _searchCtrl.text.isEmpty
-                                        ? Colors.white54
-                                        : Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                        ),
-                        if (_searchActive)
-                          GestureDetector(
-                            onTap: () {
-                              _searchCtrl.clear();
-                              setState(() => _searchActive = false);
-                            },
-                            child: const Icon(
-                              Icons.close_rounded,
-                              color: Colors.black45,
-                              size: 18,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // LIVE badge
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.65),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFF34D399).withOpacity(0.7),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF34D399),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      const Text(
-                        'LIVE',
-                        style: TextStyle(
-                          color: Color(0xFF34D399),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Saved safe zones list
-              Positioned(
-                bottom: _showRoute ? 230 : 12,
-                left: 12,
-                right: 62,
-                child: _myZones.isEmpty
+              // ── Save / success / hint ─────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                child: _routeSaved
                     ? Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                          horizontal: 14,
+                          vertical: 9,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.65),
+                          color: T.green.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.15),
-                          ),
+                          border: Border.all(color: T.green.withOpacity(0.4)),
                         ),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.shield_outlined,
-                              color: Colors.white54,
-                              size: 14,
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: T.green,
+                              size: 18,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'No safe zones yet · tap Safe Zone to add',
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 11,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Safe zone saved! Visible on map & Safe Zones page.',
+                                style: TextStyle(
+                                  color: T.green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
+                    : (_startCtrl.text.isNotEmpty && _endCtrl.text.isNotEmpty)
+                    ? PrimaryBtn(
+                        label: '🛡️  Save as Safe Zone for ${c.name}',
+                        onTap: _saveZone,
+                        T: T,
+                      )
+                    : Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.65),
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(10),
-                              ),
-                            ),
-                            child: Text(
-                              'SAFE ZONES (${_myZones.length})',
-                              style: const TextStyle(
-                                color: Colors.white60,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1,
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: T.muted,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Enter start & end to save a safe zone',
+                            style: TextStyle(color: T.muted, fontSize: 11),
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        ),
+
+        // ══════════════════════════════════════════════════
+        //  GOOGLE MAP — real interactive map
+        // ══════════════════════════════════════════════════
+        Expanded(
+          child: Stack(
+            children: [
+              // ── Real Google Map ────────────────────────
+              GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: _childPosition,
+                  zoom: 13.0,
+                ),
+                mapType: MapType.normal,
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                mapToolbarEnabled: false,
+                compassEnabled: true,
+                onMapCreated: (controller) {
+                  _mapController = controller;
+                },
+                onTap: (_) {
+                  FocusScope.of(context).unfocus();
+                  setState(() {
+                    _startFocus = false;
+                    _endFocus = false;
+                    _placeSuggestions = [];
+                  });
+                },
+                // Child location marker
+                markers: {
+                  Marker(
+                    markerId: const MarkerId('child'),
+                    position: _childPosition,
+                    infoWindow: InfoWindow(title: c.name, snippet: c.status),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                      HSLColor.fromColor(color).hue,
+                    ),
+                  ),
+                  // Safe zone centre markers
+                  ..._myZones.asMap().entries.map((e) {
+                    final z = e.value;
+                    // Find the real GPS position for this zone's start city
+                    LatLng pos = _childPosition;
+                    if (z.lat != null && z.lng != null) {
+                      pos = LatLng(z.lat!, z.lng!);
+                    } else {
+                      final st = z.start.toLowerCase();
+                      for (final city in _kCities) {
+                        if (city.$1.toLowerCase().contains(st) ||
+                            st.contains(city.$1.toLowerCase())) {
+                          pos = LatLng(city.$2, city.$3);
+                          break;
+                        }
+                      }
+                    }
+                    return Marker(
+                      markerId: MarkerId('zone_${e.key}'),
+                      position: pos,
+                      infoWindow: InfoWindow(
+                        title: '${z.icon} ${z.name}',
+                        snippet: '${z.start} → ${z.end}',
+                      ),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueBlue,
+                      ),
+                    );
+                  }),
+                },
+                // Safe zone radius circles
+                circles: {
+                  ..._myZones.asMap().entries.map((e) {
+                    final z = e.value;
+                    LatLng pos = _childPosition;
+                    if (z.lat != null && z.lng != null) {
+                      pos = LatLng(z.lat!, z.lng!);
+                    } else {
+                      final st = z.start.toLowerCase();
+                      for (final city in _kCities) {
+                        if (city.$1.toLowerCase().contains(st) ||
+                            st.contains(city.$1.toLowerCase())) {
+                          pos = LatLng(city.$2, city.$3);
+                          break;
+                        }
+                      }
+                    }
+                    final col = Color(z.colorHex);
+                    return Circle(
+                      circleId: CircleId('zone_circle_${e.key}'),
+                      center: pos,
+                      radius: z.radius.toDouble(),
+                      fillColor: col.withOpacity(0.15),
+                      strokeColor: col,
+                      strokeWidth: 2,
+                    );
+                  }),
+                },
+              ),
+
+              // Zones overlay
+              if (_myZones.isNotEmpty)
+                Positioned(
+                  bottom: 70,
+                  left: 12,
+                  right: 62,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.65),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'SAFE ZONES (${_myZones.length})',
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                      ..._myZones.map(
+                        (z) => Container(
+                          margin: const EdgeInsets.only(top: 1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.75),
+                            border: Border(
+                              left: BorderSide(
+                                color: Color(z.colorHex),
+                                width: 3,
                               ),
                             ),
                           ),
-                          ..._myZones.map(
-                            (z) => Container(
-                              margin: const EdgeInsets.only(top: 1),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 7,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                z.icon,
+                                style: const TextStyle(fontSize: 13),
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.72),
-                                border: Border(
-                                  left: BorderSide(
-                                    color: Color(z.colorHex),
-                                    width: 3,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              const SizedBox(width: 6),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    z.icon,
-                                    style: const TextStyle(fontSize: 14),
+                                    z.name,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                  const SizedBox(width: 7),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        z.name,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${z.start} → ${z.end}',
-                                        style: const TextStyle(
-                                          color: Colors.white60,
-                                          fontSize: 9,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: BoxDecoration(
-                                      color: z.inZone
-                                          ? const Color(0xFF34D399)
-                                          : const Color(0xFFF87171),
-                                      shape: BoxShape.circle,
+                                  Text(
+                                    '${z.start} → ${z.end}',
+                                    style: const TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 9,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                          Container(
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.65),
-                              borderRadius: const BorderRadius.vertical(
-                                bottom: Radius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-
-              // Safe Zone button
-              Positioned(
-                bottom: 12,
-                right: 12,
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    _showRoute = !_showRoute;
-                    _searchActive = false;
-                    _routeSaved = false;
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _showRoute
-                          ? color
-                          : Colors.black.withOpacity(0.72),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: _showRoute ? color : Colors.white24,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.35),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.shield_rounded,
-                          color: _showRoute ? Colors.white : Colors.white70,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Safe Zone',
-                          style: TextStyle(
-                            color: _showRoute ? Colors.white : Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // My location button
-              Positioned(
-                bottom: 12,
-                left: 12,
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.72),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: const Icon(
-                    Icons.my_location_rounded,
-                    color: Colors.white70,
-                    size: 20,
-                  ),
-                ),
-              ),
-
-              // Safe zone route panel
-              if (_showRoute)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onVerticalDragEnd: (details) {
-                      // Drag down faster than 200 px/s → dismiss
-                      if (details.primaryVelocity != null &&
-                          details.primaryVelocity! > 200) {
-                        setState(() => _showRoute = false);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-                      decoration: BoxDecoration(
-                        color: widget.T.card,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.4),
-                            blurRadius: 24,
-                            offset: const Offset(0, -8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Drag handle — also tappable to dismiss
-                          GestureDetector(
-                            onTap: () => setState(() => _showRoute = false),
-                            child: Center(
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: widget.T.border,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.shield_rounded,
-                                color: widget.T.cyan,
-                                size: 18,
-                              ),
                               const SizedBox(width: 8),
-                              Text(
-                                "Safe Zone for ${c.name}",
-                                style: TextStyle(
-                                  color: widget.T.text,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  color: z.inZone
+                                      ? const Color(0xFF34D399)
+                                      : const Color(0xFFF87171),
+                                  shape: BoxShape.circle,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
-                          _RouteField(
-                            ctrl: _startCtrl,
-                            label: 'Starting Point',
-                            hint: 'e.g. Home, Colombo',
-                            dotColor: widget.T.green,
-                            T: widget.T,
-                          ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 5),
-                            child: Column(
-                              children: List.generate(
-                                3,
-                                (_) => Container(
-                                  width: 2,
-                                  height: 4,
-                                  margin: const EdgeInsets.symmetric(
-                                    vertical: 2,
-                                  ),
-                                  color: widget.T.border,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          _RouteField(
-                            ctrl: _endCtrl,
-                            label: 'Ending Point',
-                            hint: 'e.g. School, Kandy',
-                            dotColor: widget.T.red,
-                            T: widget.T,
-                          ),
-                          const SizedBox(height: 14),
-                          if (_routeSaved)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: widget.T.green.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: widget.T.green.withOpacity(0.4),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.check_circle_rounded,
-                                    color: widget.T.green,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Safe zone saved!',
-                                    style: TextStyle(
-                                      color: widget.T.green,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: PrimaryBtn(
-                                    label: '🛡️  Save Safe Zone',
-                                    T: widget.T,
-                                    onTap: () {
-                                      if (_startCtrl.text.isNotEmpty &&
-                                          _endCtrl.text.isNotEmpty) {
-                                        final zone = ZoneModel(
-                                          id: DateTime.now()
-                                              .millisecondsSinceEpoch,
-                                          childId: c.id,
-                                          name: _startCtrl.text
-                                              .split(',')
-                                              .first
-                                              .trim(),
-                                          icon: '📍',
-                                          start: _startCtrl.text,
-                                          end: _endCtrl.text,
-                                          radius: 300,
-                                          colorHex: c.colorHex,
-                                          active: true,
-                                          inZone: true,
-                                        );
-                                        widget.onAddZone(
-                                          zone,
-                                        ); // save to main.dart - shared with SafeZone screen
-                                        _startCtrl.clear();
-                                        _endCtrl.clear();
-                                        setState(() => _routeSaved = true);
-                                      }
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _showRoute = false),
-                                  child: Container(
-                                    height: 48,
-                                    width: 48,
-                                    decoration: BoxDecoration(
-                                      color: widget.T.card2,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: widget.T.border,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.close_rounded,
-                                      color: widget.T.sub,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
+                        ),
                       ),
+                      Container(
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.65),
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // No zones hint
+              if (_myZones.isEmpty)
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.shield_outlined,
+                          color: Colors.white54,
+                          size: 14,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'No safe zones · add one above',
+                          style: TextStyle(color: Colors.white54, fontSize: 11),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+
+              // My location / re-centre button
+              Positioned(
+                bottom: 12,
+                right: 12,
+                child: GestureDetector(
+                  onTap: () => _mapController?.animateCamera(
+                    CameraUpdate.newLatLngZoom(_childPosition, 14),
+                  ),
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.my_location_rounded,
+                      color: Color(0xFF1A73E8),
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ],
     );
-  }
-}
-
-// Route input field
-class _RouteField extends StatelessWidget {
-  final TextEditingController ctrl;
-  final String label, hint;
-  final Color dotColor;
-  final AppTheme T;
-  const _RouteField({
-    required this.ctrl,
-    required this.label,
-    required this.hint,
-    required this.dotColor,
-    required this.T,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: dotColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: T.card2,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: T.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: T.muted,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                TextField(
-                  controller: ctrl,
-                  style: TextStyle(color: T.text, fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: TextStyle(color: T.muted, fontSize: 12),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-//  SRI LANKA MAP PAINTER
-class _SriLankaMap extends CustomPainter {
-  final Color childColor;
-  final String childName;
-  final String childAvatar;
-  final List<ZoneModel> zones;
-  const _SriLankaMap({
-    required this.childColor,
-    required this.childName,
-    required this.childAvatar,
-    required this.zones,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // ── Ocean background ─────────────────────────────
-    final rect = Rect.fromLTWH(0, 0, w, h);
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = const LinearGradient(
-          colors: [Color(0xFF0A1F35), Color(0xFF0D2B4A), Color(0xFF071525)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ).createShader(rect),
-    );
-
-    // Subtle wave texture
-    final wavePaint = Paint()
-      ..color = Colors.white.withOpacity(0.02)
-      ..strokeWidth = 1;
-    for (double y = 0; y < h; y += 22) {
-      final path = Path()..moveTo(0, y);
-      for (double x = 0; x < w; x += 40) {
-        path.quadraticBezierTo(x + 20, y - 5, x + 40, y);
-      }
-      canvas.drawPath(path, wavePaint);
-    }
-
-    final double left = w * 0.18;
-    final double right = w * 0.82;
-    final double top = h * 0.06;
-    final double bottom = h * 0.94;
-    final double mw = right - left;
-    final double mh = bottom - top;
-
-    Offset geo(double lat, double lng) {
-      final x = left + ((lng - 79.6) / (81.9 - 79.6)) * mw;
-      final y = bottom - ((lat - 5.9) / (10.0 - 5.9)) * mh;
-      return Offset(x, y);
-    }
-
-    final island = Path();
-    // Clockwise from north tip
-    final pts = [
-      [9.70, 80.00], // Jaffna north tip
-      [9.55, 80.40], // Trincomalee direction
-      [9.30, 80.70],
-      [8.85, 81.20], // Trincomalee
-      [8.40, 81.60],
-      [8.00, 81.80], // East coast
-      [7.40, 81.65],
-      [6.85, 81.85],
-      [6.30, 81.70],
-      [5.92, 80.55], // Dondra head (south tip)
-      [6.00, 80.20],
-      [6.15, 79.85], // Galle
-      [6.55, 79.70], // Colombo area
-      [7.10, 79.85],
-      [7.85, 79.90], // North-west
-      [8.45, 79.90],
-      [8.90, 79.85],
-      [9.35, 79.90], // North approach
-      [9.70, 80.00], // back to start
-    ];
-    island.moveTo(geo(pts[0][0], pts[0][1]).dx, geo(pts[0][0], pts[0][1]).dy);
-    for (int i = 1; i < pts.length; i++) {
-      island.lineTo(geo(pts[i][0], pts[i][1]).dx, geo(pts[i][0], pts[i][1]).dy);
-    }
-    island.close();
-
-    // Island fill — lush green gradient
-    canvas.drawPath(
-      island,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [
-            const Color(0xFF1D5C2A),
-            const Color(0xFF2E7A3C),
-            const Color(0xFF176028),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ).createShader(Rect.fromLTWH(left, top, mw, mh)),
-    );
-
-    // Island coastline
-    canvas.drawPath(
-      island,
-      Paint()
-        ..color = const Color(0xFF4CAF50).withOpacity(0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
-
-    // Central highlands area
-    canvas.drawCircle(
-      geo(7.3, 80.6),
-      mw * 0.12,
-      Paint()..color = const Color(0xFF1A4F22).withOpacity(0.6),
-    );
-
-    // ── Major roads / highways
-    void drawRoad(List<List<double>> waypoints, double width, Color color) {
-      if (waypoints.isEmpty) return;
-      final path = Path()
-        ..moveTo(
-          geo(waypoints[0][0], waypoints[0][1]).dx,
-          geo(waypoints[0][0], waypoints[0][1]).dy,
-        );
-      for (int i = 1; i < waypoints.length; i++) {
-        path.lineTo(
-          geo(waypoints[i][0], waypoints[i][1]).dx,
-          geo(waypoints[i][0], waypoints[i][1]).dy,
-        );
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = color
-          ..strokeWidth = width
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-    }
-
-    final highway = const Color(0xFF3A5C40);
-    final road = const Color(0xFF2E4A35);
-    // A1: Colombo → Kandy
-    drawRoad(
-      [
-        [6.93, 79.85],
-        [7.00, 80.10],
-        [7.10, 80.25],
-        [7.29, 80.64],
-      ],
-      2.5,
-      highway,
-    );
-    // A2: Colombo → Galle
-    drawRoad(
-      [
-        [6.93, 79.85],
-        [6.70, 79.88],
-        [6.40, 79.95],
-        [6.05, 80.22],
-        [5.95, 80.55],
-      ],
-      2.5,
-      highway,
-    );
-    // A3: Colombo → Negombo
-    drawRoad(
-      [
-        [6.93, 79.85],
-        [7.15, 79.87],
-        [7.35, 79.86],
-        [7.60, 79.87],
-      ],
-      2.0,
-      road,
-    );
-    // A6: Kandy → Trincomalee
-    drawRoad(
-      [
-        [7.29, 80.64],
-        [7.60, 80.90],
-        [8.00, 81.10],
-        [8.60, 81.20],
-      ],
-      2.0,
-      road,
-    );
-    // A9: Colombo → Jaffna
-    drawRoad(
-      [
-        [6.93, 79.85],
-        [7.85, 79.90],
-        [8.45, 79.92],
-        [9.00, 80.00],
-        [9.70, 80.00],
-      ],
-      2.0,
-      road,
-    );
-
-    // ── Cities ────────────────────────────────────────
-    void city(
-      double lat,
-      double lng,
-      String name,
-      double radius,
-      Color col, {
-      bool capital = false,
-    }) {
-      final pt = geo(lat, lng);
-      // Glow
-      canvas.drawCircle(pt, radius + 5, Paint()..color = col.withOpacity(0.12));
-      // Dot
-      canvas.drawCircle(pt, radius, Paint()..color = col);
-      canvas.drawCircle(
-        pt,
-        radius,
-        Paint()
-          ..color = Colors.white.withOpacity(0.25)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
-      );
-      // Inner white dot for capital
-      if (capital)
-        canvas.drawCircle(
-          pt,
-          radius * 0.45,
-          Paint()..color = Colors.white.withOpacity(0.9),
-        );
-      // Label
-      final tp = TextPainter(
-        text: TextSpan(
-          text: name,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.88),
-            fontSize: capital ? 11 : 9,
-            fontWeight: capital ? FontWeight.w700 : FontWeight.w500,
-            shadows: [const Shadow(color: Colors.black54, blurRadius: 4)],
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(pt.dx + radius + 4, pt.dy - tp.height / 2));
-    }
-
-    city(6.93, 79.85, 'Colombo', 5.5, const Color(0xFFFFA726), capital: true);
-    city(7.29, 80.64, 'Kandy', 4.5, const Color(0xFF66BB6A));
-    city(6.05, 80.22, 'Galle', 4.0, const Color(0xFF42A5F5));
-    city(8.60, 81.20, 'Trincomalee', 4.0, const Color(0xFF26C6DA));
-    city(9.70, 80.00, 'Jaffna', 4.0, const Color(0xFFAB47BC));
-    city(7.29, 81.67, 'Batticaloa', 3.5, const Color(0xFF26A69A));
-    city(6.85, 81.05, 'Badulla', 3.5, const Color(0xFFEC407A));
-    city(7.48, 80.36, 'Kurunegala', 3.5, const Color(0xFFFF7043));
-    city(8.00, 80.40, 'Anuradhapura', 4.0, const Color(0xFFFFCA28));
-    city(7.93, 81.55, 'Polonnaruwa', 3.5, const Color(0xFF9CCC65));
-
-    // ── Draw saved safe zones on map
-
-    final zonePositions = <String, Offset>{
-      'home': geo(6.93, 79.85),
-      'colombo': geo(6.93, 79.85),
-      'kandy': geo(7.29, 80.64),
-      'galle': geo(6.05, 80.22),
-      'school': geo(7.29, 80.64),
-      'trincomalee': geo(8.60, 81.20),
-      'jaffna': geo(9.70, 80.00),
-    };
-    for (final z in zones) {
-      final name = z.name.toLowerCase();
-      final start = z.start.toLowerCase();
-
-      Offset? pos;
-      for (final key in zonePositions.keys) {
-        if (start.contains(key) || name.contains(key)) {
-          pos = zonePositions[key];
-          break;
-        }
-      }
-      pos ??= geo(7.0 + (z.id % 10) * 0.15, 80.2 + (z.id % 8) * 0.1);
-      final zColor = Color(z.colorHex);
-      // Zone circle
-      canvas.drawCircle(pos, 28, Paint()..color = zColor.withOpacity(0.18));
-      canvas.drawCircle(
-        pos,
-        28,
-        Paint()
-          ..color = zColor.withOpacity(0.6)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
-      );
-      // Zone label
-      final tp = TextPainter(
-        text: TextSpan(text: z.icon, style: const TextStyle(fontSize: 14)),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(pos.dx - tp.width / 2, pos.dy - tp.height / 2));
-      // Status dot
-      canvas.drawCircle(
-        Offset(pos.dx + 20, pos.dy - 20),
-        5,
-        Paint()
-          ..color = z.inZone
-              ? const Color(0xFF34D399)
-              : const Color(0xFFF87171),
-      );
-    }
-
-    final childPos = geo(7.29, 80.64);
-    // Geofence circle
-    canvas.drawCircle(
-      childPos,
-      30,
-      Paint()..color = childColor.withOpacity(0.12),
-    );
-    canvas.drawCircle(
-      childPos,
-      30,
-      Paint()
-        ..color = childColor.withOpacity(0.55)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    // Pin shadow
-    canvas.drawCircle(
-      childPos.translate(2, 2),
-      15,
-      Paint()..color = Colors.black.withOpacity(0.25),
-    );
-    // Pin body
-    canvas.drawCircle(childPos, 15, Paint()..color = childColor);
-    canvas.drawCircle(
-      childPos,
-      15,
-      Paint()
-        ..color = Colors.white.withOpacity(0.25)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
-    // White centre
-    canvas.drawCircle(
-      childPos,
-      6,
-      Paint()..color = Colors.white.withOpacity(0.9),
-    );
-
-    // Route line: Colombo → Kandy
-    final routePath = Path()
-      ..moveTo(geo(6.93, 79.85).dx, geo(6.93, 79.85).dy)
-      ..lineTo(geo(7.10, 80.25).dx, geo(7.10, 80.25).dy)
-      ..lineTo(geo(7.29, 80.64).dx, geo(7.29, 80.64).dy);
-    canvas.drawPath(
-      routePath,
-      Paint()
-        ..color = childColor.withOpacity(0.8)
-        ..strokeWidth = 3
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-
-    // Start marker at Colombo
-    final colombo = geo(6.93, 79.85);
-    canvas.drawCircle(colombo, 8, Paint()..color = const Color(0xFF34D399));
-    canvas.drawCircle(
-      colombo,
-      8,
-      Paint()
-        ..color = Colors.white.withOpacity(0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-
-    // ── Map title
-    final title = TextPainter(
-      text: const TextSpan(
-        text: 'SRI LANKA',
-        style: TextStyle(
-          color: Color(0x3AFFFFFF),
-          fontSize: 22,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 5,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    title.paint(canvas, Offset((w - title.width) / 2, h * 0.88));
-  }
-
-  @override
-  bool shouldRepaint(_SriLankaMap old) {
-    if (old.childColor != childColor) return true;
-    if (old.childName != childName) return true;
-    if (old.zones.length != zones.length) return true;
-    // Force repaint if any zone content changed
-    for (int i = 0; i < zones.length; i++) {
-      if (old.zones[i].id != zones[i].id) return true;
-      if (old.zones[i].inZone != zones[i].inZone) return true;
-      if (old.zones[i].colorHex != zones[i].colorHex) return true;
-    }
-    return false;
   }
 }
