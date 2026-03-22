@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import '../models.dart';
 import '../theme/app_theme.dart';
 import '../services/location_service.dart';
-import '../widgets/shared_widgets.dart';
 
 class MapScreen extends StatefulWidget {
   final ChildModel? activeChild;
@@ -33,52 +32,34 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
 
-  late ChildModel? _selected;
-
   static const LatLng _kDefaultPos = LatLng(7.2906, 80.6337);
 
   LatLng _childPosition = _kDefaultPos;
-  bool _locationLoaded = false;
-
-  Timer? _locationTimer;
-
-  // ── Destination ────────────────────────────────
   LatLng? _destinationPos;
   String _destinationName = '';
 
-  // ── Places ────────────────────────────────────
-  List<Map<String, dynamic>> _placeSuggestions = [];
+  bool _locationLoaded = false;
+
+  Timer? _locationTimer;
   Timer? _debounce;
 
-  // ── Inputs ────────────────────────────────────
-  final _startCtrl = TextEditingController();
-  final _endCtrl = TextEditingController();
-
-  // ── Zones ─────────────────────────────────────
-  List<ZoneModel> get _myZones => _selected == null
-      ? []
-      : widget.zones.where((z) => z.childId == _selected!.id).toList();
+  List<Map<String, dynamic>> _placeSuggestions = [];
 
   @override
   void initState() {
     super.initState();
-    _selected =
-        widget.activeChild ??
-        (widget.children.isNotEmpty ? widget.children.first : null);
     _startPolling();
   }
 
   @override
   void dispose() {
     _locationTimer?.cancel();
-    _mapController?.dispose();
-    _startCtrl.dispose();
-    _endCtrl.dispose();
     _debounce?.cancel();
+    _mapController?.dispose();
     super.dispose();
   }
 
-  // ── Polling ────────────────────────────────────
+  //Polling
   void _startPolling() {
     _fetchLocation();
     _locationTimer = Timer.periodic(
@@ -88,9 +69,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _fetchLocation() async {
-    if (_selected == null) return;
-
-    final loc = await LocationService.fetchLocation(_selected!.id);
+    final loc = await LocationService.fetchLocation(1);
     if (loc == null || !mounted) return;
 
     final newPos = LatLng(loc.lat, loc.lng);
@@ -99,24 +78,9 @@ class _MapScreenState extends State<MapScreen> {
       _childPosition = newPos;
       _locationLoaded = true;
     });
-
-    _mapController?.animateCamera(CameraUpdate.newLatLng(newPos));
   }
 
-  void _switchChild(ChildModel child) {
-    setState(() {
-      _selected = child;
-      _childPosition = _kDefaultPos;
-      _destinationPos = null;
-    });
-
-    _startPolling();
-  }
-
-  // ════════════════════════════════════════════════
-  //  GOOGLE PLACES
-  // ════════════════════════════════════════════════
-
+  // Places API
   Future<void> _fetchPlaceSuggestions(String input) async {
     if (input.isEmpty) {
       setState(() => _placeSuggestions = []);
@@ -126,7 +90,7 @@ class _MapScreenState extends State<MapScreen> {
     final uri = Uri.https(
       'maps.googleapis.com',
       '/maps/api/place/autocomplete/json',
-      {'input': input, 'components': 'country:lk', 'key': 'YOUR_API_KEY'},
+      {'input': input, 'key': 'YOUR_API_KEY'},
     );
 
     final res = await http.get(uri);
@@ -165,29 +129,24 @@ class _MapScreenState extends State<MapScreen> {
         _placeSuggestions = [];
       });
 
-      // 🔥 Fit both child + destination
       _mapController?.animateCamera(
         CameraUpdate.newLatLngBounds(
           LatLngBounds(
             southwest: LatLng(
-              (_childPosition.latitude < dest.latitude
-                      ? _childPosition.latitude
-                      : dest.latitude) -
-                  0.02,
-              (_childPosition.longitude < dest.longitude
-                      ? _childPosition.longitude
-                      : dest.longitude) -
-                  0.02,
+              _childPosition.latitude < dest.latitude
+                  ? _childPosition.latitude
+                  : dest.latitude,
+              _childPosition.longitude < dest.longitude
+                  ? _childPosition.longitude
+                  : dest.longitude,
             ),
             northeast: LatLng(
-              (_childPosition.latitude > dest.latitude
-                      ? _childPosition.latitude
-                      : dest.latitude) +
-                  0.02,
-              (_childPosition.longitude > dest.longitude
-                      ? _childPosition.longitude
-                      : dest.longitude) +
-                  0.02,
+              _childPosition.latitude > dest.latitude
+                  ? _childPosition.latitude
+                  : dest.latitude,
+              _childPosition.longitude > dest.longitude
+                  ? _childPosition.longitude
+                  : dest.longitude,
             ),
           ),
           80,
@@ -196,7 +155,7 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // ── Markers ─────────────────────────────────────
+  // Markers
   Set<Marker> get _markers {
     final markers = <Marker>{};
 
@@ -220,11 +179,31 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        // ── Search box ──────────────────────────────
-        Padding(
-          padding: const EdgeInsets.all(12),
+        // Map
+        GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: _childPosition,
+            zoom: 14,
+          ),
+          onMapCreated: (controller) {
+            _mapController = controller;
+          },
+          onTap: (_) {
+            FocusScope.of(context).unfocus();
+            setState(() => _placeSuggestions = []);
+          },
+          markers: _markers,
+          zoomControlsEnabled: false,
+          compassEnabled: true,
+        ),
+
+        // Search UI
+        Positioned(
+          top: 40,
+          left: 12,
+          right: 12,
           child: Column(
             children: [
               TextField(
@@ -236,12 +215,16 @@ class _MapScreenState extends State<MapScreen> {
                   );
                 },
                 decoration: const InputDecoration(
-                  hintText: 'Search destination',
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Search location...',
+                  border: OutlineInputBorder(),
                 ),
               ),
 
               if (_placeSuggestions.isNotEmpty)
                 Container(
+                  color: Colors.white,
                   height: 150,
                   child: ListView(
                     children: _placeSuggestions.map((p) {
@@ -256,19 +239,28 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
 
-        // ── Map ─────────────────────────────────────
-        Expanded(
-          child: GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: _childPosition,
-              zoom: 14,
-            ),
-            onMapCreated: (controller) {
-              _mapController = controller;
+        // Recenter
+        Positioned(
+          bottom: 20,
+          right: 12,
+          child: FloatingActionButton(
+            onPressed: () {
+              _mapController?.animateCamera(
+                CameraUpdate.newLatLngZoom(_childPosition, 14),
+              );
             },
-            markers: _markers,
+            child: const Icon(Icons.my_location),
           ),
         ),
+
+        // Loading
+        if (!_locationLoaded)
+          const Positioned(
+            top: 100,
+            left: 0,
+            right: 0,
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }
