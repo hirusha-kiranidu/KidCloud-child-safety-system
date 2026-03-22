@@ -9,7 +9,7 @@ class AppTheme {
   final Color text;
   final Color sub;
   final Color muted;
-  final Color cyan;
+  final Color cyan; // brand primary (orange)
   final Color cyanD;
   final Color blue;
   final Color indigo;
@@ -41,41 +41,41 @@ class AppTheme {
 }
 
 final darkTheme = AppTheme(
-  bg: const Color(0xFF07090F),
-  surface: const Color(0xFF0D1520),
-  card: const Color(0xFF111D2E),
-  card2: const Color(0xFF182438),
-  border: const Color(0xFF1E2F48),
-  text: const Color(0xFFEEF4FF),
-  sub: const Color(0xFF6B85A8),
-  muted: const Color(0xFF2E4060),
-  cyan: const Color(0xFF00E5C8),
-  cyanD: const Color(0xFF00B09E),
-  blue: const Color(0xFF2B7EFF),
-  indigo: const Color(0xFF6366F1),
-  green: const Color(0xFF22D67A),
-  red: const Color(0xFFFF3E5E),
-  orange: const Color(0xFFFF7D3E),
-  yellow: const Color(0xFFFFD060),
-  pink: const Color(0xFFFF6EB4),
+  bg: const Color(0xFF0B1120),
+  surface: const Color(0xFF0F1829),
+  card: const Color(0xFF172030),
+  card2: const Color(0xFF1D2A3E),
+  border: const Color(0xFF2A3D58),
+  text: const Color(0xFFEFF6FF),
+  sub: const Color(0xFF94A8C0),
+  muted: const Color(0xFF4A637F),
+  cyan: const Color(0xFFF97316),
+  cyanD: const Color(0xFFDC6910),
+  blue: const Color(0xFF60A5FA),
+  indigo: const Color(0xFF818CF8),
+  green: const Color(0xFF34D399),
+  red: const Color(0xFFF87171),
+  orange: const Color(0xFFFBBF24),
+  yellow: const Color(0xFFFCD34D),
+  pink: const Color(0xFFF9A8D4),
 );
 
 final lightTheme = AppTheme(
-  bg: const Color(0xFFF0F4FA),
+  bg: const Color(0xFFE8F4FF),
   surface: const Color(0xFFFFFFFF),
   card: const Color(0xFFFFFFFF),
-  card2: const Color(0xFFEBF0FA),
-  border: const Color(0xFFD5E0F0),
-  text: const Color(0xFF0D1828),
-  sub: const Color(0xFF5A708A),
-  muted: const Color(0xFFB8CADA),
-  cyan: const Color(0xFF0096A0),
-  cyanD: const Color(0xFF007880),
-  blue: const Color(0xFF1A5FD4),
-  indigo: const Color(0xFF4F46E5),
-  green: const Color(0xFF16A85E),
-  red: const Color(0xFFE02050),
-  orange: const Color(0xFFD9620A),
-  yellow: const Color(0xFFC49200),
-  pink: const Color(0xFFC0308A),
+  card2: const Color(0xFFD6EBFF),
+  border: const Color(0xFFB8D8F0),
+  text: const Color(0xFF0A1628),
+  sub: const Color(0xFF3A5A7A),
+  muted: const Color(0xFF8BAABB),
+  cyan: const Color(0xFFEA580C),
+  cyanD: const Color(0xFFCC4F0A),
+  blue: const Color(0xFF1D6FBF),
+  indigo: const Color(0xFF4338CA),
+  green: const Color(0xFF15803D),
+  red: const Color(0xFFB91C1C),
+  orange: const Color(0xFFB45309),
+  yellow: const Color(0xFF92400E),
+  pink: const Color(0xFF9D174D),
 );
