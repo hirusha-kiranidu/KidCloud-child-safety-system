@@ -26,11 +26,16 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   Widget build(BuildContext context) {
     final T = widget.T;
 
+    // Children that have a teacher assigned
+    final childrenWithTeacher = widget.children
+        .where((c) => c.teacherName.isNotEmpty)
+        .toList();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: Column(
         children: [
-          // Top bar with back navigation and '+ Add' toggle
+          // Top bar
           KCTopBar(
             title: 'Emergency Contacts',
             sub: 'SOS alert recipients',
@@ -61,7 +66,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ── Info banner ──────────────────────────────
+          // Info banner
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             margin: const EdgeInsets.only(bottom: 16),
@@ -84,7 +89,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
           ),
 
-          // ── Pinned: Police Emergency ──────────────────
+          // Police Emergency
           Text(
             'EMERGENCY SERVICES',
             style: TextStyle(
@@ -104,6 +109,120 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             pinned: true,
             T: T,
           ),
+          const SizedBox(height: 16),
+
+          // ── Children Teacher Contacts ──────────────────
+          if (childrenWithTeacher.isNotEmpty) ...[
+            ...childrenWithTeacher.map((child) {
+              final childColor = Color(child.colorHex);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section header with avatar and name
+                  Row(
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: childColor.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: childColor, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            child.avatar,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        "${child.name.toUpperCase()}'S TEACHER",
+                        style: TextStyle(
+                          color: T.sub,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _EmergencyContactCard(
+                    avatar: '🧑‍🏫',
+                    name: child.teacherName,
+                    role: '${child.school} · ${child.name}\'s Class Teacher',
+                    phone: child.teacherPhone.isEmpty
+                        ? 'No phone number'
+                        : child.teacherPhone,
+                    color: childColor,
+                    pinned: false,
+                    T: T,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }),
+          ] else if (widget.children.isNotEmpty) ...[
+            // Fallback UI if children exist but no teacher info
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: T.card,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: T.border),
+              ),
+              child: Row(
+                children: [
+                  const Text('🧑‍🏫', style: TextStyle(fontSize: 24)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'No teachers added yet',
+                          style: TextStyle(
+                            color: T.text,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Add a teacher\'s contact in Manage Children → Edit.',
+                          style: TextStyle(color: T.sub, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => widget.go('managechild'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: T.cyan.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: T.cyan.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        'Manage ›',
+                        style: TextStyle(
+                          color: T.cyan,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ],
       ),
     );
