@@ -9,7 +9,7 @@ __pycache__/
 *.wav
 
 # Models (optional)
-*.pkl
+
 
 # Large datasets
 dataset/
