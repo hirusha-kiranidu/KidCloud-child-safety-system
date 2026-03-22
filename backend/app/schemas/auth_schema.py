@@ -39,3 +39,11 @@ class OTPVerifyRequest(BaseModel):
 
     email: EmailStr
     otp_code: str
+
+
+
+class LoginRequest(BaseModel):
+    """Schema for parent login."""
+
+    email: EmailStr
+    password: str
