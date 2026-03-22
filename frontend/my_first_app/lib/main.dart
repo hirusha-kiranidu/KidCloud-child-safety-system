@@ -3,12 +3,7 @@ import 'theme/app_theme.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/onboard_screen.dart';
-import 'screens/auth_screen.dart'; // AUTH SCREEN IMPORT
-import 'screens/dashboard_screen.dart';
-import 'screens/tracking_screen.dart';
-import 'screens/notifs_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/safezone_screen.dart';
+import 'screens/safe_zone_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,45 +28,66 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final T = AppTheme(
-      bg: Colors.white,
-      surface: Colors.grey[50]!,
-      card: Colors.white,
-      card2: Colors.grey[100]!,
-      border: Colors.grey[300]!,
-      text: Colors.black,
-      sub: Colors.grey[700]!,
-      muted: Colors.grey[500]!,
+      bgTop: Colors.blue.shade900,
+      bgBottom: Colors.blue.shade400,
+      border: Colors.grey,
+      text: Colors.white,
+      sub: Colors.white70,
       cyan: Colors.cyan,
-      cyanD: Colors.cyan[700]!,
       blue: Colors.blue,
-      indigo: Colors.indigo,
-      green: Colors.green,
-      red: Colors.red,
-      orange: Colors.orange,
-      yellow: Colors.yellow,
-      pink: Colors.pink,
+      card: Colors.white,    // added card color
     );
+
+    // Sample children for SafeZoneScreen
+    final children = [
+      ChildModel(id: 1, name: 'Emma', avatar: '👧', colorHex: 0xFF3B82F6),
+      ChildModel(id: 2, name: 'Liam', avatar: '👦', colorHex: 0xFF22C55E),
+    ];
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: SafeArea(child: buildScreen(T))),
-    );
-  }
-
-  Widget buildScreen(AppTheme T) {
-    switch (screen) {
-      case "signup":
-        return SignupScreen(go: go, T: T);
-      case "login":
-        return LoginScreen(go: go, T: T);
-      // ...other cases if needed...
-    }
-    // Default fallback if no case matches
-    return Center(
-      child: Text(
-        'Unknown screen: '
-        '"[screen]"',
+      home: Scaffold(
+        body: SafeArea(
+          child: buildScreen(T, children),
+        ),
       ),
     );
   }
+
+  Widget buildScreen(AppTheme T, List<ChildModel> children) {
+    switch (screen) {
+      case "splash":
+        return SplashScreen(go: go, T: T);
+
+      case "onboard0":
+        return OnboardScreen(idx: 0, go: go, T: T);
+
+      case "onboard1":
+        return OnboardScreen(idx: 1, go: go, T: T);
+
+      case "onboard2":
+        return OnboardScreen(idx: 2, go: go, T: T);
+
+      case "safezone":
+        return SafeZoneScreen(go: go, T: T, children: children);
+
+      default:
+        return SplashScreen(go: go, T: T);
+    }
+  }
+}
+
+// Dummy ChildModel for demonstration (replace with your real models.dart)
+class ChildModel {
+  final int id;
+  final String name;
+  final String avatar;
+  final int colorHex;
+
+  ChildModel({
+    required this.id,
+    required this.name,
+    required this.avatar,
+    required this.colorHex,
+  });
 }
