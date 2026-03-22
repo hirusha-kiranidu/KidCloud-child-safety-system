@@ -3,11 +3,17 @@ import '../theme/app_theme.dart';
 import '../models.dart';
 import '../widgets/shared_widgets.dart';
 
+// ════════════════════════════════════════════════════════
 //  NOTIFICATIONS SCREEN
-
+//  - Receives live `children` list from main.dart
+//  - Filter chips built dynamically from registered children
+//  - No hardcoded child names (Emma, Liam removed)
+//  - Notifications will come from API; empty state shown
+//    when no real notifications exist yet
+// ════════════════════════════════════════════════════════
 class NotifsScreen extends StatefulWidget {
   final Function(String) go;
-  final List<ChildModel> children;
+  final List<ChildModel> children; // live list from main.dart
   final AppTheme T;
   const NotifsScreen({
     super.key,
@@ -25,7 +31,6 @@ class _NotifsScreenState extends State<NotifsScreen> {
 
   final List<Map<String, dynamic>> _notifs = [];
 
-  // Filter chips: All + Urgent + one per registered child
   List<String> get _filterOptions {
     final names = widget.children.map((c) => c.name).toList();
     return ['All', 'Urgent', ...names];
@@ -49,7 +54,7 @@ class _NotifsScreenState extends State<NotifsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──────────────────────────────────
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -138,7 +143,7 @@ class _NotifsScreenState extends State<NotifsScreen> {
             ),
           const SizedBox(height: 14),
 
-          // Notification list or empty state
+          // ── Notification list or empty state
           if (_notifs.isEmpty)
             _EmptyNotifs(children: widget.children, go: widget.go, T: T)
           else if (_filtered.isEmpty)
@@ -301,6 +306,8 @@ class _EmptyNotifs extends StatelessWidget {
   }
 }
 
+//  ALERT HISTORY SCREEN
+
 class AlertHistoryScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -313,8 +320,6 @@ class AlertHistoryScreen extends StatefulWidget {
 class _AlertHistoryScreenState extends State<AlertHistoryScreen> {
   String _filter = 'This Week';
 
-  // ── Will be populated from ApiService.fetchAlertHistory() ──
-  // Empty until backend is connected
   final List<Map<String, dynamic>> _history = [];
 
   int get _total =>
