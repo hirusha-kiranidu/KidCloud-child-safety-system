@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 
-// ── Signup Screen ──────────────────────────────────────
 class SignupScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -77,8 +76,7 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
     setState(() => _error = null);
-    // Demo mode: skip API, go to OTP
-    // TODO: Replace with ApiService.signup() then navigate to otp
+
     widget.go('otp');
   }
 
@@ -90,7 +88,6 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Logo ──────────────────────────────────────
           Center(
             child: Column(
               children: [
@@ -132,7 +129,6 @@ class _SignupScreenState extends State<SignupScreen> {
             T: T,
           ),
 
-          // Progress bar
           Container(
             height: 5,
             decoration: BoxDecoration(
@@ -152,14 +148,12 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Error banner
           if (_error != null) ...[
             _ErrorBanner(message: _error!, T: T),
             const SizedBox(height: 12),
           ],
 
           if (_step == 1) ...[
-            // First Name + Last Name side by side
             Row(
               children: [
                 Expanded(
@@ -218,7 +212,7 @@ class _SignupScreenState extends State<SignupScreen> {
               T: T,
               obscure: true,
             ),
-            // Password strength meter
+
             ValueListenableBuilder(
               valueListenable: _pass,
               builder: (_, __, ___) => Container(
@@ -275,7 +269,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
             ),
-            // Terms checkbox
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -353,7 +347,6 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 }
 
-// ── Login Screen ───────────────────────────────────────
 class LoginScreen extends StatefulWidget {
   final Function(String) go;
   final AppTheme T;
@@ -381,9 +374,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     setState(() => _error = null);
-    // Demo mode: skip API, go to OTP
-    // TODO: Replace with ApiService.login() then navigate to otp
-    widget.go('otp');
   }
 
   @override
@@ -395,7 +385,6 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           const SizedBox(height: 12),
 
-          // ── Logo ──────────────────────────────────────
           Image.asset(
             'assets/images/logo.png',
             width: 110,
@@ -459,12 +448,44 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          // Google login goes directly to dashboard (OAuth requires native plugin)
-          PrimaryBtn(
-            label: '🔵  Continue with Google',
+
+          GestureDetector(
             onTap: () => widget.go('dashboard'),
-            T: T,
-            ghost: true,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFDADADA), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.network(
+                    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
+                    height: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Continue with Google',
+                    style: TextStyle(
+                      color: Color(0xFF3C4043),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           GestureDetector(
@@ -491,7 +512,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// ── Error banner ───────────────────────────────────────
 class _ErrorBanner extends StatelessWidget {
   final String message;
   final AppTheme T;
