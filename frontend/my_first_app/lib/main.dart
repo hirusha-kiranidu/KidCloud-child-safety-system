@@ -3,7 +3,13 @@ import 'theme/app_theme.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/onboard_screen.dart';
-import 'screens/safe_zone_screen.dart';
+import 'screens/auth_screen.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/tracking_screen.dart';
+import 'screens/notifs_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/safezone_screen.dart';
+
 
 void main() {
   runApp(const MyApp());
