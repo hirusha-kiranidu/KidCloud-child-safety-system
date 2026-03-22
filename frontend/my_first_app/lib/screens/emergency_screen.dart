@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
@@ -7,7 +8,6 @@ class EmergencyScreen extends StatefulWidget {
   final Function(String) go;
   final List<ChildModel> children;
   final AppTheme T;
-
   const EmergencyScreen({
     super.key,
     required this.go,
@@ -27,6 +27,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   Widget build(BuildContext context) {
     final T = widget.T;
 
+    // Children that have a teacher name entered
     final childrenWithTeacher = widget.children
         .where((c) => c.teacherName.isNotEmpty)
         .toList();
@@ -63,7 +64,8 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+
+          // ── Info banner ──────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             margin: const EdgeInsets.only(bottom: 16),
@@ -85,6 +87,23 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               ],
             ),
           ),
+
+          // ── Add custom contact form ──────────────────
+          if (_adding) ...[
+            _CustomContactForm(
+              T: T,
+              onSave: (c) {
+                setState(() {
+                  _custom.add(c);
+                  _adding = false;
+                });
+              },
+              onCancel: () => setState(() => _adding = false),
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // ── PINNED: Police ───────────────────────────
           Text(
             'EMERGENCY SERVICES',
             style: TextStyle(
@@ -105,25 +124,14 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             T: T,
           ),
           const SizedBox(height: 16),
-          if (_adding) ...[
-            _CustomContactForm(
-              T: T,
-              onSave: (c) {
-                setState(() {
-                  _custom.add(c);
-                  _adding = false;
-                });
-              },
-              onCancel: () => setState(() => _adding = false),
-            ),
-            const SizedBox(height: 8),
-          ],
+
           if (childrenWithTeacher.isNotEmpty) ...[
             ...childrenWithTeacher.map((child) {
               final childColor = Color(child.colorHex);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Section header with child avatar + name
                   Row(
                     children: [
                       Container(
@@ -170,6 +178,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               );
             }),
           ] else if (widget.children.isNotEmpty) ...[
+            // Children exist but no teachers added yet
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -227,6 +236,8 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
             const SizedBox(height: 16),
           ],
+
+          // ── Custom contacts ──────────────────────────
           if (_custom.isNotEmpty) ...[
             Text(
               'OTHER CONTACTS',
@@ -257,13 +268,13 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   }
 }
 
+// ── Reusable emergency contact card ───────────────────
 class _EmergencyContactCard extends StatelessWidget {
   final String avatar, name, role, phone;
   final Color color;
   final bool pinned;
   final AppTheme T;
   final VoidCallback? onDelete;
-
   const _EmergencyContactCard({
     required this.avatar,
     required this.name,
@@ -338,39 +349,56 @@ class _EmergencyContactCard extends StatelessWidget {
               ],
             ),
           ),
-          if (onDelete != null)
-            GestureDetector(
-              onTap: onDelete,
-              child: Container(
+          Column(
+            children: [
+              Container(
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: T.red.withOpacity(0.08),
+                  color: T.green.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: T.red.withOpacity(0.27)),
+                  border: Border.all(color: T.green.withOpacity(0.27)),
                 ),
-                child: Center(
-                  child: Icon(Icons.delete_outline, color: T.red, size: 14),
+                child: const Center(
+                  child: Text('📞', style: TextStyle(fontSize: 14)),
                 ),
               ),
-            ),
+              if (onDelete != null) ...[
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: onDelete,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: T.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: T.red.withOpacity(0.27)),
+                    ),
+                    child: Center(
+                      child: Icon(Icons.delete_outline, color: T.red, size: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
+// ── Add custom contact form ────────────────────────────
 class _CustomContactForm extends StatefulWidget {
   final AppTheme T;
   final Function(Map<String, String>) onSave;
   final VoidCallback onCancel;
-
   const _CustomContactForm({
     required this.T,
     required this.onSave,
     required this.onCancel,
   });
-
   @override
   State<_CustomContactForm> createState() => _CustomContactFormState();
 }
@@ -379,7 +407,6 @@ class _CustomContactFormState extends State<_CustomContactForm> {
   final _name = TextEditingController();
   final _rel = TextEditingController();
   final _phone = TextEditingController();
-
   @override
   void dispose() {
     _name.dispose();
@@ -391,7 +418,6 @@ class _CustomContactFormState extends State<_CustomContactForm> {
   @override
   Widget build(BuildContext context) {
     final T = widget.T;
-
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 8),
@@ -463,6 +489,262 @@ class _CustomContactFormState extends State<_CustomContactForm> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class NotifPrefScreen extends StatefulWidget {
+  final Function(String) go;
+  final AppTheme T;
+  const NotifPrefScreen({super.key, required this.go, required this.T});
+
+  @override
+  State<NotifPrefScreen> createState() => _NotifPrefScreenState();
+}
+
+class _NotifPrefScreenState extends State<NotifPrefScreen> {
+  final _prefs = {
+    'sos': true,
+    'geo': true,
+    'bat': true,
+    'route': true,
+    'act': false,
+    'weekly': false,
+    'band': true,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final T = widget.T;
+    final groups = [
+      {
+        'title': '🚨 Safety',
+        'items': [
+          {
+            'key': 'sos',
+            'label': 'SOS Button Pressed',
+            'desc': 'Immediate alert',
+            'urgent': true,
+          },
+          {
+            'key': 'geo',
+            'label': 'Geofence Alert',
+            'desc': 'Zone entry / exit',
+            'urgent': true,
+          },
+        ],
+      },
+      {
+        'title': '⌚ Device',
+        'items': [
+          {
+            'key': 'bat',
+            'label': 'Low Battery',
+            'desc': 'Below 20%',
+            'urgent': false,
+          },
+          {
+            'key': 'band',
+            'label': 'Band Disconnected',
+            'desc': 'Connection lost',
+            'urgent': false,
+          },
+        ],
+      },
+      {
+        'title': '📊 Activity',
+        'items': [
+          {
+            'key': 'route',
+            'label': 'Route Completed',
+            'desc': 'Child arrived safely',
+            'urgent': false,
+          },
+          {
+            'key': 'act',
+            'label': 'Activity Goals',
+            'desc': 'Step milestones',
+            'urgent': false,
+          },
+          {
+            'key': 'weekly',
+            'label': 'Weekly Report',
+            'desc': 'Every Sunday',
+            'urgent': false,
+          },
+        ],
+      },
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          KCTopBar(
+            title: 'Notification Settings',
+            sub: 'Alert preferences',
+            onBack: () => widget.go('settings'),
+            T: T,
+          ),
+          // Methods
+          Container(
+            padding: const EdgeInsets.all(14),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: T.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: T.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Alert Methods',
+                  style: TextStyle(
+                    color: T.text,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    for (final m in [
+                      ['📱', 'Push', true],
+                      ['💬', 'SMS', true],
+                      ['📧', 'Email', false],
+                    ])
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.only(right: m[0] != '📧' ? 8 : 0),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: m[2] as bool
+                                ? T.cyan.withOpacity(0.08)
+                                : T.card2,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: m[2] as bool ? T.cyan : T.border,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                m[0] as String,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                m[1] as String,
+                                style: TextStyle(
+                                  color: m[2] as bool ? T.cyan : T.sub,
+                                  fontSize: 11,
+                                  fontWeight: m[2] as bool
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          for (final group in groups) ...[
+            Text(
+              (group['title'] as String).toUpperCase(),
+              style: TextStyle(
+                color: T.sub,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: T.card,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: T.border),
+              ),
+              child: Column(
+                children: (group['items'] as List).asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final item = entry.value as Map;
+                  final isLast = i == (group['items'] as List).length - 1;
+                  final urgent = item['urgent'] as bool;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        item['label'] as String,
+                                        style: TextStyle(
+                                          color: T.text,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (urgent) ...[
+                                        const SizedBox(width: 6),
+                                        Pill(text: 'Urgent', color: T.red),
+                                      ],
+                                    ],
+                                  ),
+                                  Text(
+                                    item['desc'] as String,
+                                    style: TextStyle(
+                                      color: T.sub,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            KCToggle(
+                              on: _prefs[item['key'] as String]!,
+                              onToggle: () => setState(
+                                () => _prefs[item['key'] as String] =
+                                    !_prefs[item['key'] as String]!,
+                              ),
+                              color: urgent ? T.red : T.cyan,
+                              T: T,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!isLast)
+                        Divider(
+                          height: 1,
+                          color: T.border,
+                          indent: 14,
+                          endIndent: 14,
+                        ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
         ],
       ),
     );
