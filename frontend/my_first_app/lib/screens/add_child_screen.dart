@@ -25,6 +25,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   int _colorHex = 0xFF00E5C8;
 
   final _name = TextEditingController();
+  final _age = TextEditingController();
+  final _school = TextEditingController();
+  final _device = TextEditingController();
 
   final _avs = ['👧', '👦', '🧒', '👶', '🧑'];
   final _cols = [
@@ -39,6 +42,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   @override
   void dispose() {
     _name.dispose();
+    _age.dispose();
+    _school.dispose();
+    _device.dispose();
     super.dispose();
   }
 
@@ -213,6 +219,29 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     ),
                   )
                   .toList(),
+            ),
+          ] else if (_step == 2) ...[
+            KCInput(
+              label: 'Age *',
+              placeholder: 'e.g. 9',
+              icon: '🔢',
+              controller: _age,
+              T: T,
+              keyboardType: TextInputType.number,
+            ),
+            KCInput(
+              label: 'School / Institution *',
+              placeholder: 'e.g. Vidyalaya',
+              icon: '🏫',
+              controller: _school,
+              T: T,
+            ),
+            KCInput(
+              label: 'Device ID / Tracker ID',
+              placeholder: 'e.g. KC-A2F3',
+              icon: '⌚',
+              controller: _device,
+              T: T,
             ),
           ] else ...[
             Container(
