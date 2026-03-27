@@ -64,17 +64,15 @@ class _SplashScreenState extends State<SplashScreen>
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1),
                 children: [
-                  TextSpan(
-                      text: 'Kid', style: TextStyle(color: T.text)),
-                  TextSpan(
-                      text: 'Cloud', style: TextStyle(color: T.cyan)),
+                  TextSpan(text: 'Kid', style: TextStyle(color: T.text)),
+                  TextSpan(text: 'Cloud', style: TextStyle(color: T.cyan)),
                 ],
               ),
             ),
             const SizedBox(height: 6),
             Text('Carry Their Safety, Everywhere',
-                style: TextStyle(
-                    color: T.sub, fontSize: 13, letterSpacing: 0.5)),
+                style:
+                    TextStyle(color: T.sub, fontSize: 13, letterSpacing: 0.5)),
             const SizedBox(height: 60),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -82,8 +80,7 @@ class _SplashScreenState extends State<SplashScreen>
                   3,
                   (i) => AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        margin:
-                            const EdgeInsets.symmetric(horizontal: 3.5),
+                        margin: const EdgeInsets.symmetric(horizontal: 3.5),
                         width: i == 0 ? 26 : 8,
                         height: 8,
                         decoration: BoxDecoration(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-// Pill Badge
 class Pill extends StatelessWidget {
   final String text;
   final Color color;
@@ -29,7 +28,6 @@ class Pill extends StatelessWidget {
   }
 }
 
-//  Primary Button
 class PrimaryBtn extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -82,10 +80,9 @@ class PrimaryBtn extends StatelessWidget {
     } else {
       deco = BoxDecoration(
         gradient: LinearGradient(
-          colors: [T.cyan, T.blue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+            colors: [T.cyan, T.blue],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(14),
       );
       textColor = Colors.white;
@@ -101,18 +98,17 @@ class PrimaryBtn extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.1,
-          ),
+              color: textColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.1),
         ),
       ),
     );
   }
 }
 
-// Labeled Input
+// ── Labeled Input
 class KCInput extends StatelessWidget {
   final String? label;
   final String placeholder;
@@ -139,15 +135,12 @@ class KCInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (label != null) ...[
-          Text(
-            label!,
-            style: TextStyle(
-              color: T.sub,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
-            ),
-          ),
+          Text(label!,
+              style: TextStyle(
+                  color: T.sub,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6)),
           const SizedBox(height: 5),
         ],
         Container(
@@ -167,10 +160,8 @@ class KCInput extends StatelessWidget {
               prefixText: '$icon  ',
               prefixStyle: const TextStyle(fontSize: 16),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 13,
-              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             ),
           ),
         ),
@@ -180,19 +171,18 @@ class KCInput extends StatelessWidget {
   }
 }
 
-// Toggle Switch
+// ── Toggle Switch
 class KCToggle extends StatelessWidget {
   final bool on;
   final VoidCallback onToggle;
   final Color? color;
   final AppTheme T;
-  const KCToggle({
-    super.key,
-    required this.on,
-    required this.onToggle,
-    this.color,
-    required this.T,
-  });
+  const KCToggle(
+      {super.key,
+      required this.on,
+      required this.onToggle,
+      this.color,
+      required this.T});
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +207,7 @@ class KCToggle extends StatelessWidget {
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4),
+                BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4)
               ],
             ),
           ),
@@ -227,7 +217,7 @@ class KCToggle extends StatelessWidget {
   }
 }
 
-// Back Button
+// ── Back Button
 class KCBackBtn extends StatelessWidget {
   final VoidCallback onTap;
   final AppTheme T;
@@ -251,21 +241,20 @@ class KCBackBtn extends StatelessWidget {
   }
 }
 
-// Top Bar
+// ── Top Bar
 class KCTopBar extends StatelessWidget {
   final String title;
   final String? sub;
   final VoidCallback? onBack;
   final Widget? rightEl;
   final AppTheme T;
-  const KCTopBar({
-    super.key,
-    required this.title,
-    this.sub,
-    this.onBack,
-    this.rightEl,
-    required this.T,
-  });
+  const KCTopBar(
+      {super.key,
+      required this.title,
+      this.sub,
+      this.onBack,
+      this.rightEl,
+      required this.T});
 
   @override
   Widget build(BuildContext context) {
@@ -281,14 +270,11 @@ class KCTopBar extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: T.text,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                Text(title,
+                    style: TextStyle(
+                        color: T.text,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800)),
                 if (sub != null)
                   Text(sub!, style: TextStyle(color: T.sub, fontSize: 11)),
               ],
@@ -301,7 +287,7 @@ class KCTopBar extends StatelessWidget {
   }
 }
 
-//Battery Widget
+// ── Battery Widget ───────────────────────────────────
 class BatteryWidget extends StatelessWidget {
   final int pct;
   final AppTheme T;
@@ -312,8 +298,8 @@ class BatteryWidget extends StatelessWidget {
     final color = pct > 50
         ? T.green
         : pct > 20
-        ? T.yellow
-        : T.red;
+            ? T.yellow
+            : T.red;
     return Row(
       children: [
         Stack(
@@ -331,55 +317,43 @@ class BatteryWidget extends StatelessWidget {
                 widthFactor: pct / 100,
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
+                    decoration: BoxDecoration(
+                        color: color, borderRadius: BorderRadius.circular(1))),
               ),
             ),
             Positioned(
               right: -4,
               child: Container(
-                width: 3,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: const BorderRadius.horizontal(
-                    right: Radius.circular(2),
-                  ),
-                ),
-              ),
+                  width: 3,
+                  height: 6,
+                  decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: const BorderRadius.horizontal(
+                          right: Radius.circular(2)))),
             ),
           ],
         ),
         const SizedBox(width: 4),
-        Text(
-          '$pct%',
-          style: TextStyle(
-            color: color,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        Text('$pct%',
+            style: TextStyle(
+                color: color, fontSize: 10, fontWeight: FontWeight.w700)),
       ],
     );
   }
 }
 
-// Map Placeholder
+// ── Map Placeholder ──────────────────────────────────
 class MapPlaceholder extends StatelessWidget {
   final double height;
   final bool showRoute;
   final bool showZones;
   final AppTheme T;
-  const MapPlaceholder({
-    super.key,
-    this.height = 200,
-    this.showRoute = false,
-    this.showZones = false,
-    required this.T,
-  });
+  const MapPlaceholder(
+      {super.key,
+      this.height = 200,
+      this.showRoute = false,
+      this.showZones = false,
+      required this.T});
 
   @override
   Widget build(BuildContext context) {
@@ -392,13 +366,11 @@ class MapPlaceholder extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          // Grid lines (road simulation)
           CustomPaint(
             size: Size(double.infinity, height),
             painter: MapPainter(
-              showRoute: showRoute,
-              showZones: showZones,
-              height: height,
-            ),
+                showRoute: showRoute, showZones: showZones, height: height),
           ),
           // LIVE badge
           Positioned(
@@ -410,17 +382,13 @@ class MapPlaceholder extends StatelessWidget {
                 color: const Color(0xFF00E5C8).withOpacity(0.14),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: const Color(0xFF00E5C8).withOpacity(0.27),
-                ),
+                    color: const Color(0xFF00E5C8).withOpacity(0.27)),
               ),
-              child: const Text(
-                '● LIVE MAP',
-                style: TextStyle(
-                  color: Color(0xFF00E5C8),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              child: const Text('● LIVE MAP',
+                  style: TextStyle(
+                      color: Color(0xFF00E5C8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700)),
             ),
           ),
           Positioned(
@@ -432,10 +400,8 @@ class MapPlaceholder extends StatelessWidget {
                 color: Colors.black.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                'Powered by GPS',
-                style: TextStyle(color: T.sub, fontSize: 9),
-              ),
+              child: Text('Powered by GPS',
+                  style: TextStyle(color: T.sub, fontSize: 9)),
             ),
           ),
         ],
@@ -448,11 +414,8 @@ class MapPainter extends CustomPainter {
   final bool showRoute;
   final bool showZones;
   final double height;
-  MapPainter({
-    required this.showRoute,
-    required this.showZones,
-    required this.height,
-  });
+  MapPainter(
+      {required this.showRoute, required this.showZones, required this.height});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -490,56 +453,33 @@ class MapPainter extends CustomPainter {
 
     // Roads
     canvas.drawLine(
-      Offset(0, height * 0.5),
-      Offset(size.width, height * 0.5),
-      roadPaint,
-    );
+        Offset(0, height * 0.5), Offset(size.width, height * 0.5), roadPaint);
     canvas.drawLine(
-      Offset(0, height * 0.25),
-      Offset(size.width, height * 0.25),
-      thinRoad,
-    );
+        Offset(0, height * 0.25), Offset(size.width, height * 0.25), thinRoad);
     canvas.drawLine(
-      Offset(0, height * 0.75),
-      Offset(size.width, height * 0.75),
-      thinRoad,
-    );
+        Offset(0, height * 0.75), Offset(size.width, height * 0.75), thinRoad);
     canvas.drawLine(Offset(85, 0), Offset(85, height), thinRoad);
     canvas.drawLine(
-      Offset(170, 0),
-      Offset(170, height),
-      roadPaint..strokeWidth = 12,
-    );
+        Offset(170, 0), Offset(170, height), roadPaint..strokeWidth = 12);
     canvas.drawLine(Offset(255, 0), Offset(255, height), thinRoad);
 
     // Blocks
-    final rrect = (Rect r) =>
-        RRect.fromRectAndRadius(r, const Radius.circular(5));
+    final rrect =
+        (Rect r) => RRect.fromRectAndRadius(r, const Radius.circular(5));
     canvas.drawRRect(rrect(Rect.fromLTWH(8, 8, 68, height * 0.18)), blockPaint);
     canvas.drawRRect(
-      rrect(Rect.fromLTWH(96, 8, 65, height * 0.18)),
-      blockPaint,
-    );
+        rrect(Rect.fromLTWH(96, 8, 65, height * 0.18)), blockPaint);
     canvas.drawRRect(
-      rrect(Rect.fromLTWH(178, 8, 65, height * 0.18)),
-      blockPaint,
-    );
+        rrect(Rect.fromLTWH(178, 8, 65, height * 0.18)), blockPaint);
     canvas.drawRRect(
-      rrect(Rect.fromLTWH(268, 8, 60, height * 0.18)),
-      blockPaint,
-    );
+        rrect(Rect.fromLTWH(268, 8, 60, height * 0.18)), blockPaint);
     canvas.drawRRect(
-      rrect(Rect.fromLTWH(8, height * 0.3, 68, height * 0.15)),
-      blockPaint,
-    );
+        rrect(Rect.fromLTWH(8, height * 0.3, 68, height * 0.15)), blockPaint);
     canvas.drawRRect(
-      rrect(Rect.fromLTWH(96, height * 0.3, 65, height * 0.15)),
-      blockPaint,
-    );
+        rrect(Rect.fromLTWH(96, height * 0.3, 65, height * 0.15)), blockPaint);
     canvas.drawRRect(
-      rrect(Rect.fromLTWH(268, height * 0.55, 60, height * 0.18)),
-      blockPaint,
-    );
+        rrect(Rect.fromLTWH(268, height * 0.55, 60, height * 0.18)),
+        blockPaint);
 
     // Zones
     if (showZones) {
@@ -561,22 +501,20 @@ class MapPainter extends CustomPainter {
       // Endpoints
       for (final pt in [
         Offset(42, height * 0.78),
-        Offset(240, height * 0.22),
+        Offset(240, height * 0.22)
       ]) {
         canvas.drawCircle(
-          pt,
-          11,
-          Paint()
-            ..color = const Color(0xFF00E5C8).withOpacity(0.31)
-            ..style = PaintingStyle.fill,
-        );
+            pt,
+            11,
+            Paint()
+              ..color = const Color(0xFF00E5C8).withOpacity(0.31)
+              ..style = PaintingStyle.fill);
         canvas.drawCircle(
-          pt,
-          6,
-          Paint()
-            ..color = const Color(0xFF00E5C8)
-            ..style = PaintingStyle.fill,
-        );
+            pt,
+            6,
+            Paint()
+              ..color = const Color(0xFF00E5C8)
+              ..style = PaintingStyle.fill);
       }
     }
 

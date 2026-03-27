@@ -129,8 +129,7 @@ class ApiService {
   }
 
   static Future<ApiResult<Map<String, dynamic>>> addChild(
-    Map<String, dynamic> data,
-  ) async {
+      Map<String, dynamic> data) async {
     try {
       final res = await http.post(
         Uri.parse('$kBaseUrl$kEndpointChildren'),
