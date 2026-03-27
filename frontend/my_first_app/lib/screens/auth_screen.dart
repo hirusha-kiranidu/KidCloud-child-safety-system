@@ -88,36 +88,27 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Logo ──────────────────────────────────────
           Center(
-            child: Column(
-              children: [
-                Image.asset(
-                  'assets/images/logo.png',
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.contain,
+            child: Column(children: [
+              Image.asset(
+                'assets/images/logo.png',
+                width: 100,
+                height: 100,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 8),
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.w900),
+                  children: [
+                    TextSpan(text: 'Kid', style: TextStyle(color: T.text)),
+                    TextSpan(text: 'Cloud', style: TextStyle(color: T.cyan)),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'Kid',
-                        style: TextStyle(color: T.text),
-                      ),
-                      TextSpan(
-                        text: 'Cloud',
-                        style: TextStyle(color: T.cyan),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ]),
           ),
           const SizedBox(height: 20),
 
@@ -132,9 +123,7 @@ class _SignupScreenState extends State<SignupScreen> {
           Container(
             height: 5,
             decoration: BoxDecoration(
-              color: T.card2,
-              borderRadius: BorderRadius.circular(4),
-            ),
+                color: T.card2, borderRadius: BorderRadius.circular(4)),
             child: FractionallySizedBox(
               widthFactor: _step / 2,
               alignment: Alignment.centerLeft,
@@ -148,35 +137,35 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           const SizedBox(height: 20),
 
+          // Error banner
           if (_error != null) ...[
             _ErrorBanner(message: _error!, T: T),
             const SizedBox(height: 12),
           ],
 
           if (_step == 1) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: KCInput(
-                    label: 'First Name *',
-                    placeholder: 'e.g. Sarah',
-                    icon: '👤',
-                    controller: _firstName,
-                    T: T,
-                  ),
+            // First Name + Last Name side by side
+            Row(children: [
+              Expanded(
+                child: KCInput(
+                  label: 'First Name *',
+                  placeholder: 'e.g. Sarah',
+                  icon: '👤',
+                  controller: _firstName,
+                  T: T,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: KCInput(
-                    label: 'Last Name *',
-                    placeholder: 'e.g. Johnson',
-                    icon: '👤',
-                    controller: _lastName,
-                    T: T,
-                  ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: KCInput(
+                  label: 'Last Name *',
+                  placeholder: 'e.g. Johnson',
+                  icon: '👤',
+                  controller: _lastName,
+                  T: T,
                 ),
-              ],
-            ),
+              ),
+            ]),
             KCInput(
               label: 'Email Address *',
               placeholder: 'you@email.com',
@@ -216,106 +205,83 @@ class _SignupScreenState extends State<SignupScreen> {
             ValueListenableBuilder(
               valueListenable: _pass,
               builder: (_, __, ___) => Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
                   color: T.card2,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: T.border),
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Password strength',
-                          style: TextStyle(color: T.sub, fontSize: 11),
-                        ),
-                        Text(
-                          _strengthLabel,
+                child: Column(children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Password strength',
+                          style: TextStyle(color: T.sub, fontSize: 11)),
+                      Text(_strengthLabel,
                           style: TextStyle(
+                              color: _strengthColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: T.card, borderRadius: BorderRadius.circular(4)),
+                    child: FractionallySizedBox(
+                      widthFactor:
+                          (_pass.text.length / 10).clamp(0, 1).toDouble(),
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        decoration: BoxDecoration(
                             color: _strengthColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: T.card,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: FractionallySizedBox(
-                        widthFactor: (_pass.text.length / 10)
-                            .clamp(0, 1)
-                            .toDouble(),
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _strengthColor,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
+                            borderRadius: BorderRadius.circular(4)),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ]),
               ),
             ),
-
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => _agreed = !_agreed),
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: _agreed
-                          ? T.cyan.withOpacity(0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: T.cyan, width: 1.5),
-                    ),
-                    child: _agreed
-                        ? Icon(Icons.check, size: 12, color: T.cyan)
-                        : null,
+            // Terms checkbox
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              GestureDetector(
+                onTap: () => setState(() => _agreed = !_agreed),
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color:
+                        _agreed ? T.cyan.withOpacity(0.15) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: T.cyan, width: 1.5),
                   ),
+                  child: _agreed
+                      ? Icon(Icons.check, size: 12, color: T.cyan)
+                      : null,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        color: T.sub,
-                        fontSize: 11,
-                        height: 1.65,
-                      ),
-                      children: [
-                        const TextSpan(text: 'I agree to the '),
-                        TextSpan(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: TextStyle(color: T.sub, fontSize: 11, height: 1.65),
+                    children: [
+                      const TextSpan(text: 'I agree to the '),
+                      TextSpan(
                           text: 'Terms of Service',
-                          style: TextStyle(color: T.cyan),
-                        ),
-                        const TextSpan(text: ' and '),
-                        TextSpan(
+                          style: TextStyle(color: T.cyan)),
+                      const TextSpan(text: ' and '),
+                      TextSpan(
                           text: 'Privacy Policy',
-                          style: TextStyle(color: T.cyan),
-                        ),
-                      ],
-                    ),
+                          style: TextStyle(color: T.cyan)),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ]),
             const SizedBox(height: 18),
             PrimaryBtn(label: 'Create Account →', onTap: _submitSignup, T: T),
           ],
@@ -330,12 +296,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   children: [
                     const TextSpan(text: 'Already have an account? '),
                     TextSpan(
-                      text: 'Sign In',
-                      style: TextStyle(
-                        color: T.cyan,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                        text: 'Sign In',
+                        style: TextStyle(
+                            color: T.cyan, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
@@ -374,6 +337,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     setState(() => _error = null);
+
+    widget.go('otp');
   }
 
   @override
@@ -381,133 +346,114 @@ class _LoginScreenState extends State<LoginScreen> {
     final T = widget.T;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
+      child: Column(children: [
+        const SizedBox(height: 12),
 
-          Image.asset(
-            'assets/images/logo.png',
-            width: 110,
-            height: 110,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Welcome Back',
+        // ── Logo ──────────────────────────────────────
+        Image.asset(
+          'assets/images/logo.png',
+          width: 110,
+          height: 110,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 12),
+        Text('Welcome Back',
             style: TextStyle(
-              color: T.text,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          Text(
-            'Sign in to your account',
-            style: TextStyle(color: T.sub, fontSize: 13),
-          ),
-          const SizedBox(height: 28),
+                color: T.text, fontSize: 24, fontWeight: FontWeight.w800)),
+        Text('Sign in to your account',
+            style: TextStyle(color: T.sub, fontSize: 13)),
+        const SizedBox(height: 28),
 
-          if (_error != null) ...[
-            _ErrorBanner(message: _error!, T: T),
-            const SizedBox(height: 12),
-          ],
+        if (_error != null) ...[
+          _ErrorBanner(message: _error!, T: T),
+          const SizedBox(height: 12),
+        ],
 
-          KCInput(
-            label: 'Email Address',
-            placeholder: 'you@email.com',
-            icon: '✉️',
-            controller: _email,
-            T: T,
-            keyboardType: TextInputType.emailAddress,
+        KCInput(
+          label: 'Email Address',
+          placeholder: 'you@email.com',
+          icon: '✉️',
+          controller: _email,
+          T: T,
+          keyboardType: TextInputType.emailAddress,
+        ),
+        KCInput(
+          label: 'Password',
+          placeholder: 'Your password',
+          icon: '🔒',
+          controller: _pass,
+          T: T,
+          obscure: true,
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text('Forgot Password?',
+              style: TextStyle(color: T.cyan, fontSize: 12)),
+        ),
+        const SizedBox(height: 20),
+        PrimaryBtn(label: 'Sign In →', onTap: _submitLogin, T: T),
+        const SizedBox(height: 20),
+        Row(children: [
+          Expanded(child: Divider(color: T.border)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text('OR', style: TextStyle(color: T.sub, fontSize: 11)),
           ),
-          KCInput(
-            label: 'Password',
-            placeholder: 'Your password',
-            icon: '🔒',
-            controller: _pass,
-            T: T,
-            obscure: true,
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Forgot Password?',
-              style: TextStyle(color: T.cyan, fontSize: 12),
-            ),
-          ),
-          const SizedBox(height: 20),
-          PrimaryBtn(label: 'Sign In →', onTap: _submitLogin, T: T),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(child: Divider(color: T.border)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text('OR', style: TextStyle(color: T.sub, fontSize: 11)),
-              ),
-              Expanded(child: Divider(color: T.border)),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          GestureDetector(
-            onTap: () => widget.go('dashboard'),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFDADADA), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
+          Expanded(child: Divider(color: T.border)),
+        ]),
+        const SizedBox(height: 16),
+        // Google Sign-In button with real Google logo colours
+        GestureDetector(
+          onTap: () => widget.go('dashboard'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFDADADA), width: 1.5),
+              boxShadow: [
+                BoxShadow(
                     color: Colors.black.withOpacity(0.06),
                     blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.network(
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
-                    height: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Continue with Google',
-                    style: TextStyle(
-                      color: Color(0xFF3C4043),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.1,
-                    ),
-                  ),
-                ],
-              ),
+                    offset: const Offset(0, 2))
+              ],
             ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Image.network(
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
+                height: 20,
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Continue with Google',
+                style: TextStyle(
+                  color: Color(0xFF3C4043),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ]),
           ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: () => widget.go('signup'),
-            child: RichText(
-              text: TextSpan(
-                style: TextStyle(color: T.sub, fontSize: 12),
-                children: [
-                  const TextSpan(text: 'No account? '),
-                  TextSpan(
+        ),
+        const SizedBox(height: 20),
+        GestureDetector(
+          onTap: () => widget.go('signup'),
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(color: T.sub, fontSize: 12),
+              children: [
+                const TextSpan(text: 'No account? '),
+                TextSpan(
                     text: 'Create one free',
-                    style: TextStyle(
-                      color: T.cyan,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
+                    style:
+                        TextStyle(color: T.cyan, fontWeight: FontWeight.w700)),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
@@ -526,22 +472,15 @@ class _ErrorBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: T.red.withOpacity(0.35)),
       ),
-      child: Row(
-        children: [
-          const Text('⚠️', style: TextStyle(fontSize: 14)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
+      child: Row(children: [
+        const Text('⚠️', style: TextStyle(fontSize: 14)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(message,
               style: TextStyle(
-                color: T.red,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+                  color: T.red, fontSize: 12, fontWeight: FontWeight.w600)),
+        ),
+      ]),
     );
   }
 }

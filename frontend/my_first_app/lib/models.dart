@@ -59,17 +59,17 @@ class ChildModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    'age': age,
-    'avatar': avatar,
-    'color_hex': colorHex.toString(),
-    'school': school,
-    'device_id': device,
-    'teacher_name': teacherName,
-    'teacher_phone': teacherPhone,
-    'parent_phone': parentPhone,
-    'gender': gender,
-  };
+        'name': name,
+        'age': age,
+        'avatar': avatar,
+        'color_hex': colorHex.toString(),
+        'school': school,
+        'device_id': device,
+        'teacher_name': teacherName,
+        'teacher_phone': teacherPhone,
+        'parent_phone': parentPhone,
+        'gender': gender,
+      };
 
   ChildModel copyWith({
     String? name,
@@ -148,9 +148,6 @@ final kidsData = [
   ),
 ];
 
-// ════════════════════════════════════════════════════════
-//  ZONE MODEL  — shared between SafeZoneScreen & TrackingScreen
-// ════════════════════════════════════════════════════════
 class ZoneModel {
   final int id;
   final int childId;

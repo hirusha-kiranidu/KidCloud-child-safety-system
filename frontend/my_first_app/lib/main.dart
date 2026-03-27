@@ -24,12 +24,10 @@ import 'screens/otp_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ),
-  );
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
   runApp(const KidCloudApp());
 }
 
@@ -40,8 +38,8 @@ class KidCloudApp extends StatefulWidget {
 }
 
 class _KidCloudAppState extends State<KidCloudApp> {
-  bool _dark = false;
-  String _screen = 'splash';
+  bool   _dark     = false;
+  String _screen   = 'splash';
   ChildModel? _activeChild;
   List<ChildModel> _children = List.from(kidsData);
   String _otpPhone = '';
@@ -61,22 +59,22 @@ class _KidCloudAppState extends State<KidCloudApp> {
 
   Future<void> _addChild(Map data) async {
     final newChild = ChildModel(
-      id: DateTime.now().millisecondsSinceEpoch,
-      name: data['name'] ?? 'New Child',
-      age: data['age'] ?? 8,
-      avatar: data['avatar'] ?? '🧒',
-      colorHex: data['colorHex'] ?? 0xFF00E5C8,
-      battery: 100,
-      steps: 0,
-      status: 'At Home',
-      last: 'Just added',
-      school: data['school'] ?? '—',
-      device: data['device'] ?? '—',
-      online: false,
-      teacherName: data['teacherName'] ?? '',
+      id:           DateTime.now().millisecondsSinceEpoch,
+      name:         data['name']         ?? 'New Child',
+      age:          data['age']          ?? 8,
+      avatar:       data['avatar']       ?? '🧒',
+      colorHex:     data['colorHex']     ?? 0xFF00E5C8,
+      battery:      100,
+      steps:        0,
+      status:       'At Home',
+      last:         'Just added',
+      school:       data['school']       ?? '—',
+      device:       data['device']       ?? '—',
+      online:       false,
+      teacherName:  data['teacherName']  ?? '',
       teacherPhone: data['teacherPhone'] ?? '',
-      parentPhone: data['parentPhone'] ?? '',
-      gender: data['gender'] ?? '',
+      parentPhone:  data['parentPhone']  ?? '',
+      gender:       data['gender']       ?? '',
     );
     setState(() => _children.add(newChild));
     await ApiService.addChild(newChild.toJson());
@@ -115,10 +113,10 @@ class _KidCloudAppState extends State<KidCloudApp> {
   Future<void> _logout() async {
     await ApiService.logout();
     setState(() {
-      _screen = 'welcome';
-      _children = List.from(kidsData);
+      _screen      = 'welcome';
+      _children    = List.from(kidsData);
       _activeChild = null;
-      _zones = [];
+      _zones       = [];
     });
   }
 
@@ -126,39 +124,24 @@ class _KidCloudAppState extends State<KidCloudApp> {
 
   static const _navScreens = {'dashboard', 'map', 'notifs', 'settings'};
   static const _noHeaderScreens = {
-    'splash',
-    'onboard0',
-    'onboard1',
-    'onboard2',
-    'welcome',
-    'login',
-    'signup',
-    'otp',
-    'map',
-    'tracking',
+    'splash', 'onboard0', 'onboard1', 'onboard2',
+    'welcome', 'login', 'signup', 'otp',
+    'map', 'tracking',
   };
 
-  bool get _showNav => _navScreens.contains(_screen);
+  bool get _showNav    => _navScreens.contains(_screen);
   bool get _showHeader => !_noHeaderScreens.contains(_screen);
 
   Widget _buildScreen() {
     switch (_screen) {
-      case 'splash':
-        return SplashScreen(go: _go, T: T);
-      case 'onboard0':
-        return OnboardScreen(idx: 0, go: _go, T: T);
-      case 'onboard1':
-        return OnboardScreen(idx: 1, go: _go, T: T);
-      case 'onboard2':
-        return OnboardScreen(idx: 2, go: _go, T: T);
-      case 'welcome':
-        return WelcomeScreen(go: _go, T: T);
-      case 'signup':
-        return SignupScreen(go: _go, T: T);
-      case 'login':
-        return LoginScreen(go: _go, T: T);
-      case 'otp':
-        return OtpScreen(go: _go, phoneNumber: _otpPhone);
+      case 'splash':   return SplashScreen(go: _go, T: T);
+      case 'onboard0': return OnboardScreen(idx: 0, go: _go, T: T);
+      case 'onboard1': return OnboardScreen(idx: 1, go: _go, T: T);
+      case 'onboard2': return OnboardScreen(idx: 2, go: _go, T: T);
+      case 'welcome':  return WelcomeScreen(go: _go, T: T);
+      case 'signup':   return SignupScreen(go: _go, T: T);
+      case 'login':    return LoginScreen(go: _go, T: T);
+      case 'otp':      return OtpScreen(go: _go, phoneNumber: _otpPhone);
       case 'dashboard':
         return DashboardScreen(
           go: (s) async {
@@ -254,17 +237,9 @@ class _KidCloudAppState extends State<KidCloudApp> {
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: _dark
-                  ? [
-                      const Color(0xFF060B14),
-                      const Color(0xFF1A112A),
-                      const Color(0xFF060B14),
-                    ]
-                  : [
-                      const Color(0xFFE8F4FF),
-                      const Color(0xFFFFEAD5),
-                      const Color(0xFFE8F4FF),
-                    ],
+              colors: _dark 
+                ? [const Color(0xFF060B14), const Color(0xFF1A112A), const Color(0xFF060B14)]
+                : [const Color(0xFFE8F4FF), const Color(0xFFFFEAD5), const Color(0xFFE8F4FF)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -279,7 +254,8 @@ class _KidCloudAppState extends State<KidCloudApp> {
                     onToggleDark: () => setState(() => _dark = !_dark),
                   ),
                 Expanded(child: _buildScreen()),
-                if (_showNav) _BottomNav(screen: _screen, go: _go, T: T),
+                if (_showNav)
+                  _BottomNav(screen: _screen, go: _go, T: T),
               ],
             ),
           ),
@@ -294,64 +270,51 @@ class _AppHeader extends StatelessWidget {
   final AppTheme T;
   final bool dark;
   final VoidCallback onToggleDark;
-  const _AppHeader({
-    required this.T,
-    required this.dark,
-    required this.onToggleDark,
-  });
+  const _AppHeader(
+      {required this.T, required this.dark, required this.onToggleDark});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: T.bg,
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 8),
-      child: Row(
-        children: [
-          // ── Logo ────────────────────────────────────────
-          Image.asset(
-            'assets/images/logo.png',
-            width: 48,
-            height: 48,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(width: 8),
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(
+      child: Row(children: [
+        // ── Logo ────────────────────────────────────────
+        Image.asset(
+          'assets/images/logo.png',
+          width: 48,
+          height: 48,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: 8),
+        RichText(
+          text: TextSpan(
+            style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-              ),
-              children: [
-                TextSpan(
-                  text: 'Kid',
-                  style: TextStyle(color: T.text),
-                ),
-                TextSpan(
-                  text: 'Cloud',
-                  style: TextStyle(color: T.cyan),
-                ),
-              ],
-            ),
+                letterSpacing: -0.5),
+            children: [
+              TextSpan(text: 'Kid',   style: TextStyle(color: T.text)),
+              TextSpan(text: 'Cloud', style: TextStyle(color: T.cyan)),
+            ],
           ),
-          const Spacer(),
-          GestureDetector(
-            onTap: onToggleDark,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: T.card2,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: T.border),
-              ),
-              child: Text(
-                dark ? '☀️' : '🌙',
-                style: const TextStyle(fontSize: 13),
-              ),
+        ),
+        const Spacer(),
+        GestureDetector(
+          onTap: onToggleDark,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: T.card2,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: T.border),
             ),
+            child: Text(dark ? '☀️' : '🌙',
+                style: const TextStyle(fontSize: 13)),
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
@@ -361,18 +324,14 @@ class _BottomNav extends StatelessWidget {
   final String screen;
   final Function(String) go;
   final AppTheme T;
-  const _BottomNav({required this.screen, required this.go, required this.T});
+  const _BottomNav(
+      {required this.screen, required this.go, required this.T});
 
   static const _tabs = [
-    ('dashboard', Icons.home_rounded, Icons.home_outlined, 'Home'),
-    ('map', Icons.location_on_rounded, Icons.location_on_outlined, 'Map'),
-    (
-      'notifs',
-      Icons.notifications_rounded,
-      Icons.notifications_outlined,
-      'Alerts',
-    ),
-    ('settings', Icons.settings_rounded, Icons.settings_outlined, 'Settings'),
+    ('dashboard', Icons.home_rounded,          Icons.home_outlined,          'Home'),
+    ('map',       Icons.location_on_rounded,   Icons.location_on_outlined,   'Map'),
+    ('notifs',    Icons.notifications_rounded, Icons.notifications_outlined, 'Alerts'),
+    ('settings',  Icons.settings_rounded,      Icons.settings_outlined,      'Settings'),
   ];
 
   @override
@@ -404,9 +363,7 @@ class _BottomNav extends StatelessWidget {
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
+                        horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
                       color: active
                           ? T.cyan.withOpacity(0.15)
@@ -425,7 +382,9 @@ class _BottomNav extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       color: active ? T.cyan : T.sub,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                      fontWeight: active
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                     ),
                   ),
                 ],
