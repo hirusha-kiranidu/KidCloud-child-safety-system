@@ -28,12 +28,11 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
+  // ── 5 minutes = 300 seconds ─────────────────────────────
   static const int _totalSeconds = 300;
   int _secondsLeft = _totalSeconds;
   late Timer _timer;
@@ -58,6 +57,7 @@ class _OtpScreenState extends State<OtpScreen> {
     super.dispose();
   }
 
+  // ── Start / restart 5-min countdown ────────────────────
   void _startTimer() {
     _secondsLeft = _totalSeconds;
     _canResend = false;
@@ -72,14 +72,17 @@ class _OtpScreenState extends State<OtpScreen> {
     });
   }
 
+  // ── mm:ss display ───────────────────────────────────────
   String get _timerDisplay {
     final m = _secondsLeft ~/ 60;
     final s = _secondsLeft % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
+  // ── 0.0–1.0 progress for ring ──────────────────────────
   double get _timerProgress => _secondsLeft / _totalSeconds;
 
+  // ── Resend ──────────────────────────────────────────────
   void _resendOtp() {
     if (!_canResend) return;
     for (final c in _controllers) c.clear();
@@ -90,10 +93,12 @@ class _OtpScreenState extends State<OtpScreen> {
     });
     _timer.cancel();
     _startTimer();
+    // TODO: call your resend OTP API here
   }
 
   String get _otpCode => _controllers.map((c) => c.text).join();
 
+  // ── Verify ──────────────────────────────────────────────
   void _verifyOtp() async {
     if (_otpCode.length < 6) {
       setState(() {
@@ -107,6 +112,7 @@ class _OtpScreenState extends State<OtpScreen> {
       _isError = false;
     });
 
+    // TODO: Replace with real OTP verification API call
     await Future.delayed(const Duration(seconds: 2));
 
     if (_otpCode == '123456') {
@@ -162,8 +168,8 @@ class _OtpScreenState extends State<OtpScreen> {
           color: _isError
               ? kRed
               : _isSuccess
-              ? kGreen
-              : kCyan,
+                  ? kGreen
+                  : kCyan,
           fontSize: 22,
           fontWeight: FontWeight.w800,
         ),
@@ -191,6 +197,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Turn red when under 60 seconds left
     final urgentColor = (_secondsLeft < 60 && !_canResend) ? kRed : kCyan;
 
     return Scaffold(
@@ -201,45 +208,36 @@ class _OtpScreenState extends State<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => widget.go('signup'),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: kCard2,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: kBorder),
-                      ),
-                      child: const Icon(
-                        Icons.chevron_left,
-                        color: kText,
-                        size: 22,
-                      ),
+              // ── Back + title ───────────────────────
+              Row(children: [
+                GestureDetector(
+                  onTap: () => widget.go('signup'),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: kCard2,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: kBorder),
                     ),
+                    child:
+                        const Icon(Icons.chevron_left, color: kText, size: 22),
                   ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Verify Phone 📱',
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Verify Phone 📱',
                         style: TextStyle(
-                          color: kText,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        'Enter the code we sent you',
-                        style: TextStyle(color: kSub, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                            color: kText,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800)),
+                    Text('Enter the code we sent you',
+                        style: TextStyle(color: kSub, fontSize: 11)),
+                  ],
+                ),
+              ]),
               const SizedBox(height: 36),
 
               Center(
@@ -248,55 +246,43 @@ class _OtpScreenState extends State<OtpScreen> {
                   height: 90,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [kCyan, kBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                        colors: [kCyan, kBlue],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight),
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: kCyan.withOpacity(0.35),
-                        blurRadius: 36,
-                        offset: const Offset(0, 8),
-                      ),
+                          color: kCyan.withOpacity(0.35),
+                          blurRadius: 36,
+                          offset: const Offset(0, 8))
                     ],
                   ),
                   child: const Center(
-                    child: Text('🔐', style: TextStyle(fontSize: 42)),
-                  ),
+                      child: Text('🔐', style: TextStyle(fontSize: 42))),
                 ),
               ),
               const SizedBox(height: 24),
 
               const Center(
-                child: Text(
-                  'OTP Verification',
-                  style: TextStyle(
-                    color: kText,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                child: Text('OTP Verification',
+                    style: TextStyle(
+                        color: kText,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800)),
               ),
               const SizedBox(height: 8),
               Center(
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
-                    style: const TextStyle(
-                      color: kSub,
-                      fontSize: 13,
-                      height: 1.6,
-                    ),
+                    style:
+                        const TextStyle(color: kSub, fontSize: 13, height: 1.6),
                     children: [
                       const TextSpan(text: 'We sent a 6-digit code to\n'),
                       TextSpan(
-                        text: widget.phoneNumber,
-                        style: const TextStyle(
-                          color: kCyan,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                          text: widget.phoneNumber,
+                          style: const TextStyle(
+                              color: kCyan, fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
@@ -304,105 +290,89 @@ class _OtpScreenState extends State<OtpScreen> {
               const SizedBox(height: 28),
 
               Center(
-                child: Column(
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
+                child: Column(children: [
+                  Stack(alignment: Alignment.center, children: [
+                    SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: CircularProgressIndicator(
+                        value: _timerProgress,
+                        strokeWidth: 5,
+                        backgroundColor: kBorder,
+                        valueColor: AlwaysStoppedAnimation(urgentColor),
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(
-                          width: 80,
-                          height: 80,
-                          child: CircularProgressIndicator(
-                            value: _timerProgress,
-                            strokeWidth: 5,
-                            backgroundColor: kBorder,
-                            valueColor: AlwaysStoppedAnimation(urgentColor),
-                          ),
+                        Text(
+                          _canResend ? '0:00' : _timerDisplay,
+                          style: TextStyle(
+                              color: urgentColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800),
                         ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _canResend ? '0:00' : _timerDisplay,
-                              style: TextStyle(
-                                color: urgentColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            Text(
-                              _canResend ? 'Expired' : 'left',
-                              style: TextStyle(
-                                color: _canResend ? kRed : kSub,
-                                fontSize: 9,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          _canResend ? 'Expired' : 'left',
+                          style: TextStyle(
+                              color: _canResend ? kRed : kSub, fontSize: 9),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _canResend
-                          ? 'Code has expired — tap Resend'
-                          : (_secondsLeft < 60
-                                ? 'Expiring soon!'
-                                : 'Code valid for 5 minutes'),
-                      style: TextStyle(color: urgentColor, fontSize: 11),
-                    ),
-                  ],
-                ),
+                  ]),
+                  const SizedBox(height: 6),
+                  Text(
+                    _canResend
+                        ? 'Code has expired — tap Resend'
+                        : (_secondsLeft < 60
+                            ? 'Expiring soon!'
+                            : 'Code valid for 5 minutes'),
+                    style: TextStyle(color: urgentColor, fontSize: 11),
+                  ),
+                ]),
               ),
               const SizedBox(height: 28),
 
+              // ── OTP boxes ─────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (i) => _buildOtpBox(i)),
               ),
               const SizedBox(height: 16),
 
+              // ── Error / success msg ───────────────
               if (_isError)
                 Center(
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, color: kRed, size: 14),
-                      const SizedBox(width: 6),
-                      Text(
-                        _errorMsg,
-                        style: const TextStyle(
-                          color: kRed,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, color: kRed, size: 14),
+                        const SizedBox(width: 6),
+                        Text(_errorMsg,
+                            style: const TextStyle(
+                                color: kRed,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
+                      ]),
                 ),
               if (_isSuccess)
                 Center(
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.check_circle_outline,
-                        color: kGreen,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'Verified successfully! Redirecting...',
-                        style: TextStyle(
-                          color: kGreen,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_circle_outline,
+                            color: kGreen, size: 14),
+                        const SizedBox(width: 6),
+                        const Text('Verified successfully! Redirecting...',
+                            style: TextStyle(
+                                color: kGreen,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
+                      ]),
                 ),
               const SizedBox(height: 28),
 
+              // ── Verify button ─────────────────────
               GestureDetector(
                 onTap: _isVerifying ? null : _verifyOtp,
                 child: AnimatedContainer(
@@ -415,94 +385,76 @@ class _OtpScreenState extends State<OtpScreen> {
                         : const LinearGradient(
                             colors: [kCyan, kBlue],
                             begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
+                            end: Alignment.centerRight),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: kCyan.withOpacity(0.28),
-                        blurRadius: 22,
-                        offset: const Offset(0, 6),
-                      ),
+                          color: kCyan.withOpacity(0.28),
+                          blurRadius: 22,
+                          offset: const Offset(0, 6))
                     ],
                   ),
                   child: _isVerifying
                       ? const Center(
                           child: SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          _isSuccess ? '✅ Verified!' : 'Verify OTP',
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2.5)))
+                      : Text(_isSuccess ? '✅ Verified!' : 'Verify OTP',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700)),
                 ),
               ),
               const SizedBox(height: 24),
 
+              // ── Resend section ────────────────────
               Center(
-                child: Column(
-                  children: [
-                    const Text(
-                      "Didn't receive the code?",
-                      style: TextStyle(color: kSub, fontSize: 13),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: _canResend ? _resendOtp : null,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _canResend ? kCyan.withOpacity(0.1) : kCard2,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _canResend ? kCyan : kBorder,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.refresh,
+                child: Column(children: [
+                  const Text("Didn't receive the code?",
+                      style: TextStyle(color: kSub, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _canResend ? _resendOtp : null,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _canResend ? kCyan.withOpacity(0.1) : kCard2,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _canResend ? kCyan : kBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.refresh,
+                              color: _canResend ? kCyan : kSub, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            _canResend
+                                ? 'Resend OTP'
+                                : 'Resend in $_timerDisplay',
+                            style: TextStyle(
                               color: _canResend ? kCyan : kSub,
-                              size: 16,
+                              fontSize: 13,
+                              fontWeight: _canResend
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _canResend
-                                  ? 'Resend OTP'
-                                  : 'Resend in $_timerDisplay',
-                              style: TextStyle(
-                                color: _canResend ? kCyan : kSub,
-                                fontSize: 13,
-                                fontWeight: _canResend
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ]),
               ),
               const SizedBox(height: 32),
 
+              // ── Security note ─────────────────────
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -510,23 +462,17 @@ class _OtpScreenState extends State<OtpScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: kCyan.withOpacity(0.2)),
                 ),
-                child: Row(
-                  children: [
-                    const Text('🔒', style: TextStyle(fontSize: 18)),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'This code expires in 5 minutes. '
-                        'Never share your OTP with anyone.',
-                        style: TextStyle(
-                          color: kSub,
-                          fontSize: 11,
-                          height: 1.6,
-                        ),
-                      ),
+                child: Row(children: [
+                  const Text('🔒', style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'This code expires in 5 minutes. '
+                      'Never share your OTP with anyone.',
+                      style: TextStyle(color: kSub, fontSize: 11, height: 1.6),
                     ),
-                  ],
-                ),
+                  ),
+                ]),
               ),
             ],
           ),

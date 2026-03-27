@@ -35,7 +35,7 @@ class OnboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data  = _obData[idx];
+    final data = _obData[idx];
     final color = Color(data['color'] as int);
     return Container(
       decoration: BoxDecoration(
@@ -66,11 +66,9 @@ class OnboardScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(44),
-                border: Border.all(
-                    color: color.withOpacity(0.27), width: 2),
+                border: Border.all(color: color.withOpacity(0.27), width: 2),
                 boxShadow: [
-                  BoxShadow(
-                      color: color.withOpacity(0.13), blurRadius: 70)
+                  BoxShadow(color: color.withOpacity(0.13), blurRadius: 70)
                 ],
               ),
               child: Center(
@@ -91,8 +89,7 @@ class OnboardScreen extends StatelessWidget {
             Text(
               data['desc'] as String,
               textAlign: TextAlign.center,
-              style:
-                  TextStyle(color: T.sub, fontSize: 14, height: 1.75),
+              style: TextStyle(color: T.sub, fontSize: 14, height: 1.75),
             ),
             const Spacer(),
             // Dots
@@ -102,8 +99,7 @@ class OnboardScreen extends StatelessWidget {
                   3,
                   (i) => AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 3.5),
+                        margin: const EdgeInsets.symmetric(horizontal: 3.5),
                         width: i == idx ? 28 : 8,
                         height: 8,
                         decoration: BoxDecoration(
@@ -115,8 +111,7 @@ class OnboardScreen extends StatelessWidget {
             const SizedBox(height: 28),
             PrimaryBtn(
               label: idx < 2 ? 'Next →' : 'Get Started 🚀',
-              onTap: () =>
-                  go(idx < 2 ? 'onboard${idx + 1}' : 'welcome'),
+              onTap: () => go(idx < 2 ? 'onboard${idx + 1}' : 'welcome'),
               T: T,
             ),
           ],
@@ -126,12 +121,10 @@ class OnboardScreen extends StatelessWidget {
   }
 }
 
-// ── Welcome Screen ─────────────────────────────────────
 class WelcomeScreen extends StatelessWidget {
   final Function(String) go;
   final AppTheme T;
-  const WelcomeScreen(
-      {super.key, required this.go, required this.T});
+  const WelcomeScreen({super.key, required this.go, required this.T});
 
   @override
   Widget build(BuildContext context) {
@@ -162,16 +155,11 @@ class WelcomeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               text: TextSpan(
                 style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2),
+                    fontSize: 28, fontWeight: FontWeight.w900, height: 1.2),
                 children: [
                   TextSpan(
-                      text: 'Welcome to\n',
-                      style: TextStyle(color: T.text)),
-                  TextSpan(
-                      text: 'KidCloud',
-                      style: TextStyle(color: T.cyan)),
+                      text: 'Welcome to\n', style: TextStyle(color: T.text)),
+                  TextSpan(text: 'KidCloud', style: TextStyle(color: T.cyan)),
                 ],
               ),
             ),
@@ -179,8 +167,7 @@ class WelcomeScreen extends StatelessWidget {
             Text(
               "Your child's safety, always in\nthe palm of your hand.",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: T.sub, fontSize: 14, height: 1.8),
+              style: TextStyle(color: T.sub, fontSize: 14, height: 1.8),
             ),
             const SizedBox(height: 36),
 
@@ -200,13 +187,11 @@ class WelcomeScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: T.cyan.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: T.cyan.withOpacity(0.25)),
+                        border: Border.all(color: T.cyan.withOpacity(0.25)),
                       ),
                       child: Center(
                           child: Text(item[0],
-                              style: const TextStyle(
-                                  fontSize: 26))),
+                              style: const TextStyle(fontSize: 26))),
                     ),
                     const SizedBox(height: 6),
                     Text(item[1],
@@ -221,9 +206,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
             const Spacer(),
             PrimaryBtn(
-                label: 'Create Account',
-                onTap: () => go('signup'),
-                T: T),
+                label: 'Create Account', onTap: () => go('signup'), T: T),
             const SizedBox(height: 10),
             PrimaryBtn(
                 label: 'Sign In',

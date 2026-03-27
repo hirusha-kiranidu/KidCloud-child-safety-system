@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/api_config.dart';
 
-// ── Location data model ───────────────────────────────
 class ChildLocation {
   final double lat;
   final double lng;
@@ -16,26 +15,20 @@ class ChildLocation {
   }
 }
 
-// ── Location Service ──────────────────────────────────
-// Fetches child location from GET /location/{child_id}
-// Called every 5 seconds by MapScreen's Timer.
 class LocationService {
-  /// Fetch the latest GPS location for a specific child.
-  /// Returns null on any failure — caller handles gracefully.
   static Future<ChildLocation?> fetchLocation(int childId) async {
     try {
       final uri = Uri.parse('$kBaseUrl/location/$childId');
-      final response = await http
-          .get(uri, headers: {'Content-Type': 'application/json'})
-          .timeout(const Duration(seconds: 4));
+      final response = await http.get(uri, headers: {
+        'Content-Type': 'application/json'
+      }).timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         return ChildLocation.fromJson(json);
       } else {
         print(
-          '[LocationService] HTTP ${response.statusCode} for child $childId',
-        );
+            '[LocationService] HTTP ${response.statusCode} for child $childId');
         return null;
       }
     } catch (e) {
