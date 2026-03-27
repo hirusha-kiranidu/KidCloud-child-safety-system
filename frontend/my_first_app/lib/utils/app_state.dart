@@ -68,9 +68,8 @@ class AppState extends ChangeNotifier {
 
       if (children.isNotEmpty) {
         final updated = children.first.copyWith(last: 'Just now');
-        children = children
-            .map((c) => c.id == updated.id ? updated : c)
-            .toList();
+        children =
+            children.map((c) => c.id == updated.id ? updated : c).toList();
         notifyListeners();
       }
     });
