@@ -1,0 +1,22 @@
+# Virtual environment
+ai_env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Audio files
+*.wav
+
+# Models (optional)
+
+
+# Large datasets
+dataset/
+ESC-50-master/
+audio_samples/
+test_sounds/
+
+# OS files
+.DS_Store
+Thumbs.db
